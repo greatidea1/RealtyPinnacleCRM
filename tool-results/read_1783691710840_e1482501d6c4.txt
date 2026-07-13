@@ -1,0 +1,2002 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback, useRef } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import { useAppStore } from '@/lib/store';
+     6→import { cn } from '@/lib/utils';
+     7→import { Button } from '@/components/ui/button';
+     8→import { Input } from '@/components/ui/input';
+     9→import { Badge } from '@/components/ui/badge';
+    10→import { Label } from '@/components/ui/label';
+    11→import { Textarea } from '@/components/ui/textarea';
+    12→import {
+    13→  Select,
+    14→  SelectContent,
+    15→  SelectItem,
+    16→  SelectTrigger,
+    17→  SelectValue,
+    18→} from '@/components/ui/select';
+    19→import {
+    20→  Building2,
+    21→  Search,
+    22→  Plus,
+    23→  LayoutGrid,
+    24→  List,
+    25→  Eye,
+    26→  Pencil,
+    27→  Trash2,
+    28→  BedDouble,
+    29→  Bath,
+    30→  Maximize2,
+    31→  MapPin,
+    32→  Home,
+    33→  Calendar,
+    34→  User,
+    35→  Phone,
+    36→  Mail,
+    37→  ArrowLeft,
+    38→  ChevronLeft,
+    39→  ChevronRight,
+    40→  X,
+    41→  Loader2,
+    42→  Shield,
+    43→  Hash,
+    44→  Compass,
+    45→  Clock,
+    46→  Layers,
+    47→  Handshake,
+    48→  CheckSquare2,
+    49→  Briefcase,
+    50→  Tag,
+    51→  Ruler,
+    52→  Navigation,
+    53→  Info,
+    54→} from 'lucide-react';
+    55→import type {
+    56→  Property,
+    57→  PropertyStatus,
+    58→  PropertyType,
+    59→  Deal,
+    60→  Task,
+    61→  User as UserType,
+    62→} from '@/lib/types';
+    63→import {
+    64→  STATUS_COLORS,
+    65→  STAGE_COLORS,
+    66→  PRIORITY_COLORS,
+    67→  formatPrice,
+    68→  ALL_AMENITIES,
+    69→} from '@/lib/types';
+    70→
+    71→// ─── Constants ────────────────────────────────────────────────────────────────
+    72→
+    73→const PROPERTY_TYPES: PropertyType[] = [
+    74→  'Apartment',
+    75→  'Villa',
+    76→  'Penthouse',
+    77→  'Commercial',
+    78→  'Plot',
+    79→  'Studio',
+    80→];
+    81→
+    82→const STATUS_FILTERS: { label: string; value: string }[] = [
+    83→  { label: 'All', value: '' },
+    84→  { label: 'Active', value: 'Active' },
+    85→  { label: 'Pending', value: 'Pending' },
+    86→  { label: 'Sold', value: 'Sold' },
+    87→];
+    88→
+    89→const FACING_OPTIONS = [
+    90→  'East',
+    91→  'West',
+    92→  'North',
+    93→  'South',
+    94→  'North-East',
+    95→  'North-West',
+    96→  'South-East',
+    97→  'South-West',
+    98→];
+    99→
+   100→const AGE_OPTIONS = [
+   101→  'New Launch',
+   102→  '0-1 Years',
+   103→  '1-5 Years',
+   104→  '5-10 Years',
+   105→  '10-20 Years',
+   106→  '20+ Years',
+   107→];
+   108→
+   109→const PRICE_UNITS = ['Lakhs', 'Crore'];
+   110→
+   111→const FORM_STEPS = [
+   112→  { label: 'Property Details', icon: Building2 },
+   113→  { label: 'Specs', icon: Ruler },
+   114→  { label: 'Location', icon: MapPin },
+   115→  { label: 'RERA & Developer', icon: Shield },
+   116→  { label: 'Features', icon: Layers },
+   117→  { label: 'Listing Info', icon: Tag },
+   118→];
+   119→
+   120→const PAGE_SIZE = 12;
+   121→
+   122→const THUMBNAIL_GRADIENTS = [
+   123→  'bg-gradient-to-br from-emerald-400 to-teal-500',
+   124→  'bg-gradient-to-br from-amber-400 to-orange-500',
+   125→  'bg-gradient-to-br from-violet-400 to-purple-500',
+   126→  'bg-gradient-to-br from-rose-400 to-pink-500',
+   127→  'bg-gradient-to-br from-sky-400 to-cyan-500',
+   128→  'bg-gradient-to-br from-teal-400 to-emerald-500',
+   129→];
+   130→
+   131→// ─── PropertiesListPage ───────────────────────────────────────────────────────
+   132→
+   133→export function PropertiesListPage() {
+   134→  const { user, navigate, openPropertyForm, openDeleteDialog } = useAppStore();
+   135→
+   136→  const [properties, setProperties] = useState<Property[]>([]);
+   137→  const [loading, setLoading] = useState(true);
+   138→  const [search, setSearch] = useState('');
+   139→  const [statusFilter, setStatusFilter] = useState('');
+   140→  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+   141→  const [page, setPage] = useState(1);
+   142→  const [total, setTotal] = useState(0);
+   143→  const [counts, setCounts] = useState({ All: 0, Active: 0, Pending: 0, Sold: 0 });
+   144→
+   145→  const fetchProperties = useCallback(async () => {
+   146→    if (!user) return;
+   147→    setLoading(true);
+   148→    try {
+   149→      const params = new URLSearchParams({
+   150→        userId: user.id,
+   151→        role: user.role,
+   152→        page: String(page),
+   153→        limit: String(PAGE_SIZE),
+   154→      });
+   155→      if (statusFilter) params.set('status', statusFilter);
+   156→      if (search.trim()) params.set('search', search.trim());
+   157→
+   158→      const res = await fetch(`/api/properties?${params}`);
+   159→      const data = await res.json();
+   160→      if (res.ok) {
+   161→        setProperties(data.properties || []);
+   162→        setTotal(data.total || 0);
+   163→        setCounts(data.counts || { All: 0, Active: 0, Pending: 0, Sold: 0 });
+   164→      }
+   165→    } catch {
+   166→      // silent fail
+   167→    } finally {
+   168→      setLoading(false);
+   169→    }
+   170→  }, [user, search, statusFilter, page]);
+   171→
+   172→  useEffect(() => {
+   173→    fetchProperties();
+   174→  }, [fetchProperties]);
+   175→
+   176→  const totalPages = Math.ceil(total / PAGE_SIZE);
+   177→
+   178→  return (
+   179→    <div className="space-y-6">
+   180→      {/* Header */}
+   181→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   182→        <div>
+   183→          <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
+   184→          <p className="text-sm text-gray-500 mt-0.5">
+   185→            Manage your property listings
+   186→          </p>
+   187→        </div>
+   188→        <Button
+   189→          onClick={() => openPropertyForm()}
+   190→          className="gap-2 gradient-primary text-white border-0 shadow-lg shadow-emerald-200 hover:shadow-emerald-300"
+   191→        >
+   192→          <Plus className="w-4 h-4" />
+   193→          Add Property
+   194→        </Button>
+   195→      </div>
+   196→
+   197→      {/* Toolbar */}
+   198→      <div className="glass-card rounded-xl p-4">
+   199→        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+   200→          {/* Search */}
+   201→          <div className="relative flex-1 max-w-md">
+   202→            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+   203→            <Input
+   204→              placeholder="Search properties by title, locality..."
+   205→              value={search}
+   206→              onChange={(e) => {
+   207→                setSearch(e.target.value);
+   208→                setPage(1);
+   209→              }}
+   210→              className="pl-9"
+   211→            />
+   212→          </div>
+   213→
+   214→          {/* Filter Chips */}
+   215→          <div className="flex items-center gap-2 flex-wrap">
+   216→            {STATUS_FILTERS.map((f) => (
+   217→              <button
+   218→                key={f.value}
+   219→                onClick={() => {
+   220→                  setStatusFilter(f.value);
+   221→                  setPage(1);
+   222→                }}
+   223→                className={cn(
+   224→                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all badge-glossy',
+   225→                  statusFilter === f.value
+   226→                    ? 'gradient-primary text-white shadow-md shadow-emerald-200'
+   227→                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+   228→                )}
+   229→              >
+   230→                {f.label}
+   231→                <span className="ml-1.5 opacity-80">
+   232→                  {(f.value ? counts[f.value as PropertyStatus] : counts.All) ?? 0}
+   233→                </span>
+   234→              </button>
+   235→            ))}
+   236→          </div>
+   237→
+   238→          {/* View Toggle */}
+   239→          <div className="flex items-center gap-1 bg-emerald-50 rounded-lg p-1">
+   240→            <button
+   241→              onClick={() => setViewMode('table')}
+   242→              className={cn(
+   243→                'p-1.5 rounded-md transition-all',
+   244→                viewMode === 'table'
+   245→                  ? 'bg-white text-emerald-700 shadow-sm'
+   246→                  : 'text-gray-400 hover:text-emerald-600'
+   247→              )}
+   248→            >
+   249→              <List className="w-4 h-4" />
+   250→            </button>
+   251→            <button
+   252→              onClick={() => setViewMode('grid')}
+   253→              className={cn(
+   254→                'p-1.5 rounded-md transition-all',
+   255→                viewMode === 'grid'
+   256→                  ? 'bg-white text-emerald-700 shadow-sm'
+   257→                  : 'text-gray-400 hover:text-emerald-600'
+   258→              )}
+   259→            >
+   260→              <LayoutGrid className="w-4 h-4" />
+   261→            </button>
+   262→          </div>
+   263→        </div>
+   264→      </div>
+   265→
+   266→      {/* Content */}
+   267→      <AnimatePresence mode="wait">
+   268→        {loading ? (
+   269→          <motion.div
+   270→            key="loading"
+   271→            initial={{ opacity: 0 }}
+   272→            animate={{ opacity: 1 }}
+   273→            exit={{ opacity: 0 }}
+   274→          >
+   275→            {viewMode === 'table' ? (
+   276→              <PropertiesTableSkeleton />
+   277→            ) : (
+   278→              <PropertiesGridSkeleton />
+   279→            )}
+   280→          </motion.div>
+   281→        ) : properties.length === 0 ? (
+   282→          <motion.div
+   283→            key="empty"
+   284→            initial={{ opacity: 0, y: 20 }}
+   285→            animate={{ opacity: 1, y: 0 }}
+   286→            exit={{ opacity: 0 }}
+   287→            className="glass-card rounded-xl p-12 flex flex-col items-center justify-center text-center"
+   288→          >
+   289→            <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+   290→              <Building2 className="w-8 h-8 text-emerald-300" />
+   291→            </div>
+   292→            <h3 className="text-lg font-semibold text-gray-700 mb-1">
+   293→              No properties found
+   294→            </h3>
+   295→            <p className="text-sm text-gray-400 max-w-sm">
+   296→              {search || statusFilter
+   297→                ? 'Try adjusting your search or filters.'
+   298→                : 'Get started by adding your first property listing.'}
+   299→            </p>
+   300→            {!search && !statusFilter && (
+   301→              <Button
+   302→                onClick={() => openPropertyForm()}
+   303→                className="mt-4 gap-2"
+   304→                size="sm"
+   305→              >
+   306→                <Plus className="w-4 h-4" />
+   307→                Add Property
+   308→              </Button>
+   309→            )}
+   310→          </motion.div>
+   311→        ) : viewMode === 'table' ? (
+   312→          <motion.div
+   313→            key="table"
+   314→            initial={{ opacity: 0, y: 10 }}
+   315→            animate={{ opacity: 1, y: 0 }}
+   316→            exit={{ opacity: 0 }}
+   317→          >
+   318→            <PropertiesTable
+   319→              properties={properties}
+   320→              isAdmin={user?.role === 'ADMIN'}
+   321→              onView={(p) => navigate('property-detail', p.id)}
+   322→              onEdit={openPropertyForm}
+   323→              onDelete={(p) => openDeleteDialog('property', p.id, p.title)}
+   324→            />
+   325→          </motion.div>
+   326→        ) : (
+   327→          <motion.div
+   328→            key="grid"
+   329→            initial={{ opacity: 0, y: 10 }}
+   330→            animate={{ opacity: 1, y: 0 }}
+   331→            exit={{ opacity: 0 }}
+   332→          >
+   333→            <PropertiesGrid
+   334→              properties={properties}
+   335→              isAdmin={user?.role === 'ADMIN'}
+   336→              onView={(p) => navigate('property-detail', p.id)}
+   337→              onEdit={openPropertyForm}
+   338→              onDelete={(p) => openDeleteDialog('property', p.id, p.title)}
+   339→            />
+   340→          </motion.div>
+   341→        )}
+   342→      </AnimatePresence>
+   343→
+   344→      {/* Pagination */}
+   345→      {totalPages > 1 && !loading && (
+   346→        <div className="flex items-center justify-between">
+   347→          <p className="text-sm text-gray-500">
+   348→            Showing {(page - 1) * PAGE_SIZE + 1}–
+   349→            {Math.min(page * PAGE_SIZE, total)} of {total} properties
+   350→          </p>
+   351→          <div className="flex items-center gap-2">
+   352→            <Button
+   353→              variant="outline"
+   354→              size="icon"
+   355→              onClick={() => setPage((p) => Math.max(1, p - 1))}
+   356→              disabled={page === 1}
+   357→            >
+   358→              <ChevronLeft className="w-4 h-4" />
+   359→            </Button>
+   360→            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+   361→              let pageNum: number;
+   362→              if (totalPages <= 5) {
+   363→                pageNum = i + 1;
+   364→              } else if (page <= 3) {
+   365→                pageNum = i + 1;
+   366→              } else if (page >= totalPages - 2) {
+   367→                pageNum = totalPages - 4 + i;
+   368→              } else {
+   369→                pageNum = page - 2 + i;
+   370→              }
+   371→              return (
+   372→                <Button
+   373→                  key={pageNum}
+   374→                  variant={page === pageNum ? 'default' : 'outline'}
+   375→                  size="icon"
+   376→                  onClick={() => setPage(pageNum)}
+   377→                  className={cn(
+   378→                    page === pageNum && 'gradient-primary border-0'
+   379→                  )}
+   380→                >
+   381→                  {pageNum}
+   382→                </Button>
+   383→              );
+   384→            })}
+   385→            <Button
+   386→              variant="outline"
+   387→              size="icon"
+   388→              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+   389→              disabled={page === totalPages}
+   390→            >
+   391→              <ChevronRight className="w-4 h-4" />
+   392→            </Button>
+   393→          </div>
+   394→        </div>
+   395→      )}
+   396→    </div>
+   397→  );
+   398→}
+   399→
+   400→// ─── Properties Table ─────────────────────────────────────────────────────────
+   401→
+   402→interface PropertiesTableProps {
+   403→  properties: Property[];
+   404→  isAdmin: boolean;
+   405→  onView: (p: Property) => void;
+   406→  onEdit: (p: Property) => void;
+   407→  onDelete: (p: Property) => void;
+   408→}
+   409→
+   410→function PropertiesTable({ properties, isAdmin, onView, onEdit, onDelete }: PropertiesTableProps) {
+   411→  return (
+   412→    <div className="glass-card rounded-xl overflow-hidden">
+   413→      <div className="overflow-x-auto custom-scrollbar">
+   414→        <table className="w-full text-sm">
+   415→          <thead>
+   416→            <tr className="border-b border-emerald-100 bg-emerald-50/30">
+   417→              <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   418→                Property
+   419→              </th>
+   420→              <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   421→                Location
+   422→              </th>
+   423→              <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   424→                Type
+   425→              </th>
+   426→              <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   427→                Price
+   428→              </th>
+   429→              <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   430→                Specs
+   431→              </th>
+   432→              <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   433→                Status
+   434→              </th>
+   435→              {isAdmin && (
+   436→                <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   437→                  Agent
+   438→                </th>
+   439→              )}
+   440→              <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+   441→                Actions
+   442→              </th>
+   443→            </tr>
+   444→          </thead>
+   445→          <tbody className="divide-y divide-emerald-50">
+   446→            {properties.map((property, idx) => (
+   447→              <tr
+   448→                key={property.id}
+   449→                className="table-row-hover cursor-pointer"
+   450→                onClick={() => onView(property)}
+   451→              >
+   452→                {/* Thumbnail + Title */}
+   453→                <td className="px-4 py-3">
+   454→                  <div className="flex items-center gap-3">
+   455→                    <div
+   456→                      className={cn(
+   457→                        'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+   458→                        THUMBNAIL_GRADIENTS[idx % THUMBNAIL_GRADIENTS.length]
+   459→                      )}
+   460→                    >
+   461→                      <Building2 className="w-5 h-5 text-white/90" />
+   462→                    </div>
+   463→                    <div className="min-w-0">
+   464→                      <p className="font-semibold text-gray-800 truncate max-w-[200px]">
+   465→                        {property.title}
+   466→                      </p>
+   467→                    </div>
+   468→                  </div>
+   469→                </td>
+   470→
+   471→                {/* Location */}
+   472→                <td className="px-4 py-3">
+   473→                  <p className="text-gray-600 truncate max-w-[160px]">
+   474→                    {property.locality}, {property.city}
+   475→                  </p>
+   476→                </td>
+   477→
+   478→                {/* Type */}
+   479→                <td className="px-4 py-3">
+   480→                  <span className="text-gray-600">{property.propertyType}</span>
+   481→                </td>
+   482→
+   483→                {/* Price */}
+   484→                <td className="px-4 py-3">
+   485→                  <span className="font-semibold text-emerald-700">
+   486→                    {formatPrice(property.price, property.priceUnit)}
+   487→                  </span>
+   488→                </td>
+   489→
+   490→                {/* Beds/Baths/Area */}
+   491→                <td className="px-4 py-3">
+   492→                  <div className="flex items-center gap-3 text-gray-500 text-xs">
+   493→                    {property.bedrooms != null && (
+   494→                      <span className="flex items-center gap-1">
+   495→                        <BedDouble className="w-3.5 h-3.5" />
+   496→                        {property.bedrooms}
+   497→                      </span>
+   498→                    )}
+   499→                    {property.bathrooms != null && (
+   500→                      <span className="flex items-center gap-1">
+   501→                        <Bath className="w-3.5 h-3.5" />
+   502→                        {property.bathrooms}
+   503→                      </span>
+   504→                    )}
+   505→                    {property.carpetArea != null && (
+   506→                      <span className="flex items-center gap-1">
+   507→                        <Maximize2 className="w-3.5 h-3.5" />
+   508→                        {property.carpetArea} sq.ft
+   509→                      </span>
+   510→                    )}
+   511→                  </div>
+   512→                </td>
+   513→
+   514→                {/* Status */}
+   515→                <td className="px-4 py-3">
+   516→                  <Badge
+   517→                    className={cn(
+   518→                      'badge-glossy text-[11px] font-medium',
+   519→                      STATUS_COLORS[property.status]
+   520→                    )}
+   521→                  >
+   522→                    {property.status}
+   523→                  </Badge>
+   524→                </td>
+   525→
+   526→                {/* Agent (admin only) */}
+   527→                {isAdmin && (
+   528→                  <td className="px-4 py-3">
+   529→                    <span className="text-gray-600 text-xs truncate max-w-[120px] block">
+   530→                      {property.assignedTo?.name || '—'}
+   531→                    </span>
+   532→                  </td>
+   533→                )}
+   534→
+   535→                {/* Actions */}
+   536→                <td className="px-4 py-3">
+   537→                  <div
+   538→                    className="flex items-center justify-end gap-1"
+   539→                    onClick={(e) => e.stopPropagation()}
+   540→                  >
+   541→                    <Button
+   542→                      variant="ghost"
+   543→                      size="icon"
+   544→                      className="h-8 w-8 text-gray-400 hover:text-emerald-600"
+   545→                      onClick={() => onView(property)}
+   546→                    >
+   547→                      <Eye className="w-4 h-4" />
+   548→                    </Button>
+   549→                    <Button
+   550→                      variant="ghost"
+   551→                      size="icon"
+   552→                      className="h-8 w-8 text-gray-400 hover:text-amber-600"
+   553→                      onClick={() => onEdit(property)}
+   554→                    >
+   555→                      <Pencil className="w-4 h-4" />
+   556→                    </Button>
+   557→                    <Button
+   558→                      variant="ghost"
+   559→                      size="icon"
+   560→                      className="h-8 w-8 text-gray-400 hover:text-rose-600"
+   561→                      onClick={() => onDelete(property)}
+   562→                    >
+   563→                      <Trash2 className="w-4 h-4" />
+   564→                    </Button>
+   565→                  </div>
+   566→                </td>
+   567→              </tr>
+   568→            ))}
+   569→          </tbody>
+   570→        </table>
+   571→      </div>
+   572→    </div>
+   573→  );
+   574→}
+   575→
+   576→// ─── Properties Grid ──────────────────────────────────────────────────────────
+   577→
+   578→function PropertiesGrid({ properties, isAdmin, onView, onEdit, onDelete }: PropertiesTableProps) {
+   579→  return (
+   580→    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+   581→      {properties.map((property, idx) => (
+   582→        <motion.div
+   583→          key={property.id}
+   584→          layout
+   585→          initial={{ opacity: 0, scale: 0.95 }}
+   586→          animate={{ opacity: 1, scale: 1 }}
+   587→          exit={{ opacity: 0, scale: 0.95 }}
+   588→          transition={{ duration: 0.2 }}
+   589→        >
+   590→          <div
+   591→            className="glass-card glass-card-hover rounded-xl overflow-hidden cursor-pointer group"
+   592→            onClick={() => onView(property)}
+   593→          >
+   594→            {/* Card Header with gradient overlay */}
+   595→            <div
+   596→              className={cn(
+   597→                'relative h-36 flex items-center justify-center',
+   598→                THUMBNAIL_GRADIENTS[idx % THUMBNAIL_GRADIENTS.length]
+   599→              )}
+   600→            >
+   601→              {/* Gradient overlay pattern */}
+   602→              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+   603→              <Building2 className="w-12 h-12 text-white/40" />
+   604→
+   605→              {/* Price badge */}
+   606→              <div className="absolute top-3 right-3">
+   607→                <span className="px-2.5 py-1 rounded-lg bg-white/90 backdrop-blur-sm text-sm font-bold text-emerald-700 shadow-sm">
+   608→                  {formatPrice(property.price, property.priceUnit)}
+   609→                </span>
+   610→              </div>
+   611→
+   612→              {/* Status badge */}
+   613→              <div className="absolute top-3 left-3">
+   614→                <Badge
+   615→                  className={cn(
+   616→                    'badge-glossy text-[10px]',
+   617→                    STATUS_COLORS[property.status]
+   618→                  )}
+   619→                >
+   620→                  {property.status}
+   621→                </Badge>
+   622→              </div>
+   623→
+   624→              {/* Actions overlay on hover */}
+   625→              <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+   626→                   onClick={(e) => e.stopPropagation()}>
+   627→                <Button
+   628→                  variant="secondary"
+   629→                  size="icon"
+   630→                  className="h-7 w-7 bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm"
+   631→                  onClick={() => onEdit(property)}
+   632→                >
+   633→                  <Pencil className="w-3.5 h-3.5 text-gray-600" />
+   634→                </Button>
+   635→                <Button
+   636→                  variant="secondary"
+   637→                  size="icon"
+   638→                  className="h-7 w-7 bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm"
+   639→                  onClick={() => onDelete(property)}
+   640→                >
+   641→                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+   642→                </Button>
+   643→              </div>
+   644→            </div>
+   645→
+   646→            {/* Card Body */}
+   647→            <div className="p-4 space-y-3">
+   648→              <div>
+   649→                <h3 className="font-semibold text-gray-800 text-sm truncate">
+   650→                  {property.title}
+   651→                </h3>
+   652→                <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+   653→                  <MapPin className="w-3 h-3 flex-shrink-0" />
+   654→                  <span className="truncate">{property.locality}, {property.city}</span>
+   655→                </p>
+   656→              </div>
+   657→
+   658→              {/* Quick Stats */}
+   659→              <div className="flex items-center gap-3 text-xs text-gray-500">
+   660→                {property.bedrooms != null && (
+   661→                  <span className="flex items-center gap-1">
+   662→                    <BedDouble className="w-3.5 h-3.5 text-emerald-400" />
+   663→                    {property.bedrooms} Bed
+   664→                  </span>
+   665→                )}
+   666→                {property.bathrooms != null && (
+   667→                  <span className="flex items-center gap-1">
+   668→                    <Bath className="w-3.5 h-3.5 text-emerald-400" />
+   669→                    {property.bathrooms} Bath
+   670→                  </span>
+   671→                )}
+   672→                {property.carpetArea != null && (
+   673→                  <span className="flex items-center gap-1">
+   674→                    <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+   675→                    {property.carpetArea} sq.ft
+   676→                  </span>
+   677→                )}
+   678→              </div>
+   679→
+   680→              {/* Agent (admin) */}
+   681→              {isAdmin && property.assignedTo && (
+   682→                <div className="flex items-center gap-2 pt-2 border-t border-emerald-50">
+   683→                  <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+   684→                    <User className="w-3 h-3 text-emerald-600" />
+   685→                  </div>
+   686→                  <span className="text-xs text-gray-500 truncate">
+   687→                    {property.assignedTo.name}
+   688→                  </span>
+   689→                </div>
+   690→              )}
+   691→            </div>
+   692→          </div>
+   693→        </motion.div>
+   694→      ))}
+   695→    </div>
+   696→  );
+   697→}
+   698→
+   699→// ─── Skeleton Loaders ─────────────────────────────────────────────────────────
+   700→
+   701→function PropertiesTableSkeleton() {
+   702→  return (
+   703→    <div className="glass-card rounded-xl overflow-hidden">
+   704→      <div className="overflow-x-auto">
+   705→        <table className="w-full text-sm">
+   706→          <thead>
+   707→            <tr className="border-b border-emerald-100 bg-emerald-50/30">
+   708→              {[...Array(7)].map((_, i) => (
+   709→                <th
+   710→                  key={i}
+   711→                  className="text-left px-4 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wider"
+   712→                >
+   713→                  <div className="h-3 w-16 rounded shimmer" />
+   714→                </th>
+   715→              ))}
+   716→            </tr>
+   717→          </thead>
+   718→          <tbody className="divide-y divide-emerald-50">
+   719→            {[...Array(8)].map((_, row) => (
+   720→              <tr key={row}>
+   721→                <td className="px-4 py-3">
+   722→                  <div className="flex items-center gap-3">
+   723→                    <div className="w-10 h-10 rounded-lg shimmer" />
+   724→                    <div className="h-4 w-36 rounded shimmer" />
+   725→                  </div>
+   726→                </td>
+   727→                <td className="px-4 py-3">
+   728→                  <div className="h-4 w-28 rounded shimmer" />
+   729→                </td>
+   730→                <td className="px-4 py-3">
+   731→                  <div className="h-4 w-16 rounded shimmer" />
+   732→                </td>
+   733→                <td className="px-4 py-3">
+   734→                  <div className="h-4 w-20 rounded shimmer" />
+   735→                </td>
+   736→                <td className="px-4 py-3">
+   737→                  <div className="flex gap-3">
+   738→                    <div className="h-4 w-10 rounded shimmer" />
+   739→                    <div className="h-4 w-10 rounded shimmer" />
+   740→                  </div>
+   741→                </td>
+   742→                <td className="px-4 py-3">
+   743→                  <div className="h-5 w-14 rounded-full shimmer" />
+   744→                </td>
+   745→                <td className="px-4 py-3">
+   746→                  <div className="h-4 w-16 rounded shimmer ml-auto" />
+   747→                </td>
+   748→              </tr>
+   749→            ))}
+   750→          </tbody>
+   751→        </table>
+   752→      </div>
+   753→    </div>
+   754→  );
+   755→}
+   756→
+   757→function PropertiesGridSkeleton() {
+   758→  return (
+   759→    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+   760→      {[...Array(8)].map((_, i) => (
+   761→        <div key={i} className="glass-card rounded-xl overflow-hidden">
+   762→          <div className="h-36 shimmer" />
+   763→          <div className="p-4 space-y-3">
+   764→            <div className="h-4 w-3/4 rounded shimmer" />
+   765→            <div className="h-3 w-1/2 rounded shimmer" />
+   766→            <div className="flex gap-3">
+   767→              <div className="h-3 w-14 rounded shimmer" />
+   768→              <div className="h-3 w-14 rounded shimmer" />
+   769→              <div className="h-3 w-16 rounded shimmer" />
+   770→            </div>
+   771→          </div>
+   772→        </div>
+   773→      ))}
+   774→    </div>
+   775→  );
+   776→}
+   777→
+   778→// ─── PropertyDetailPage ───────────────────────────────────────────────────────
+   779→
+   780→export function PropertyDetailPage() {
+   781→  const { selectedId, user, navigate, openPropertyForm, openDeleteDialog } = useAppStore();
+   782→
+   783→  const [property, setProperty] = useState<Property | null>(null);
+   784→  const [linkedDeals, setLinkedDeals] = useState<Deal[]>([]);
+   785→  const [linkedTasks, setLinkedTasks] = useState<Task[]>([]);
+   786→  const [loading, setLoading] = useState(true);
+   787→  const [dealsLoading, setDealsLoading] = useState(false);
+   788→  const [tasksLoading, setTasksLoading] = useState(false);
+   789→
+   790→  // Fetch property detail
+   791→  useEffect(() => {
+   792→    if (!selectedId) return;
+   793→    const fetchProperty = async () => {
+   794→      setLoading(true);
+   795→      try {
+   796→        const res = await fetch(`/api/properties?id=${selectedId}`);
+   797→        const data = await res.json();
+   798→        if (res.ok && data.property) {
+   799→          setProperty(data.property);
+   800→        }
+   801→      } catch {
+   802→        // silent
+   803→      } finally {
+   804→        setLoading(false);
+   805→      }
+   806→    };
+   807→    fetchProperty();
+   808→  }, [selectedId]);
+   809→
+   810→  // Fetch linked deals
+   811→  useEffect(() => {
+   812→    if (!property?._count?.deals) {
+   813→      setLinkedDeals([]);
+   814→      return;
+   815→    }
+   816→    const fetchDeals = async () => {
+   817→      setDealsLoading(true);
+   818→      try {
+   819→        const res = await fetch(
+   820→          `/api/deals?propertyId=${selectedId}&limit=10`
+   821→        );
+   822→        const data = await res.json();
+   823→        if (res.ok) setLinkedDeals(data.deals || []);
+   824→      } catch {
+   825→        // silent
+   826→      } finally {
+   827→        setDealsLoading(false);
+   828→      }
+   829→    };
+   830→    fetchDeals();
+   831→  }, [property?._count?.deals, selectedId]);
+   832→
+   833→  // Fetch linked tasks
+   834→  useEffect(() => {
+   835→    if (!property?._count?.tasks) {
+   836→      setLinkedTasks([]);
+   837→      return;
+   838→    }
+   839→    const fetchTasks = async () => {
+   840→      setTasksLoading(true);
+   841→      try {
+   842→        const res = await fetch(
+   843→          `/api/tasks?propertyId=${selectedId}&limit=10`
+   844→        );
+   845→        const data = await res.json();
+   846→        if (res.ok) setLinkedTasks(data.tasks || []);
+   847→      } catch {
+   848→        // silent
+   849→      } finally {
+   850→        setTasksLoading(false);
+   851→      }
+   852→    };
+   853→    fetchTasks();
+   854→  }, [property?._count?.tasks, selectedId]);
+   855→
+   856→  if (loading) {
+   857→    return (
+   858→      <div className="space-y-6">
+   859→        <div className="h-8 w-48 rounded shimmer" />
+   860→        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   861→          <div className="lg:col-span-2 h-64 rounded-xl shimmer" />
+   862→          <div className="space-y-4">
+   863→            {[...Array(4)].map((_, i) => (
+   864→              <div key={i} className="h-32 rounded-xl shimmer" />
+   865→            ))}
+   866→          </div>
+   867→        </div>
+   868→      </div>
+   869→    );
+   870→  }
+   871→
+   872→  if (!property) {
+   873→    return (
+   874→      <div className="glass-card rounded-xl p-12 flex flex-col items-center justify-center">
+   875→        <Building2 className="w-12 h-12 text-gray-300 mb-4" />
+   876→        <p className="text-gray-500">Property not found.</p>
+   877→        <Button variant="outline" className="mt-4" onClick={() => navigate('properties')}>
+   878→          Back to Properties
+   879→        </Button>
+   880→      </div>
+   881→    );
+   882→  }
+   883→
+   884→  const heroGradient =
+   885→    THUMBNAIL_GRADIENTS[
+   886→      property.title.length % THUMBNAIL_GRADIENTS.length
+   887→    ];
+   888→
+   889→  return (
+   890→    <div className="space-y-6">
+   891→      {/* Action Bar */}
+   892→      <div className="flex items-center gap-3">
+   893→        <Button variant="ghost" size="sm" onClick={() => navigate('properties')} className="gap-1">
+   894→          <ArrowLeft className="w-4 h-4" />
+   895→          Properties
+   896→        </Button>
+   897→        <div className="flex-1" />
+   898→        <Button variant="outline" size="sm" className="gap-2" onClick={() => openPropertyForm(property)}>
+   899→          <Pencil className="w-4 h-4" />
+   900→          Edit
+   901→        </Button>
+   902→        <Button
+   903→          variant="outline"
+   904→          size="sm"
+   905→          className="gap-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700 border-rose-200"
+   906→          onClick={() => openDeleteDialog('property', property.id, property.title)}
+   907→        >
+   908→          <Trash2 className="w-4 h-4" />
+   909→          Delete
+   910→        </Button>
+   911→      </div>
+   912→
+   913→      {/* Two-column layout */}
+   914→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   915→        {/* Left Column */}
+   916→        <div className="lg:col-span-2 space-y-6">
+   917→          {/* Hero Section */}
+   918→          <div
+   919→            className={cn(
+   920→              'relative rounded-xl overflow-hidden h-64 md:h-72',
+   921→              heroGradient
+   922→            )}
+   923→          >
+   924→            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+   925→            <div className="absolute bottom-0 left-0 right-0 p-6">
+   926→              <Badge
+   927→                className={cn(
+   928→                  'badge-glossy mb-3',
+   929→                  STATUS_COLORS[property.status]
+   930→                )}
+   931→              >
+   932→                {property.status}
+   933→              </Badge>
+   934→              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+   935→                {property.title}
+   936→              </h1>
+   937→              <p className="text-white/80 flex items-center gap-1.5 text-sm">
+   938→                <MapPin className="w-4 h-4" />
+   939→                {property.fullAddress || `${property.locality}, ${property.city}${property.pincode ? ` - ${property.pincode}` : ''}`}
+   940→              </p>
+   941→            </div>
+   942→          </div>
+   943→
+   944→          {/* Description */}
+   945→          {property.description && (
+   946→            <div className="glass-card rounded-xl p-6">
+   947→              <h2 className="font-semibold text-gray-800 mb-3">Description</h2>
+   948→              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+   949→                {property.description}
+   950→              </p>
+   951→            </div>
+   952→          )}
+   953→
+   954→          {/* Amenities */}
+   955→          {property.amenities && property.amenities.length > 0 && (
+   956→            <div className="glass-card rounded-xl p-6">
+   957→              <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+   958→                <Layers className="w-4 h-4 text-emerald-500" />
+   959→                Amenities
+   960→              </h2>
+   961→              <div className="flex flex-wrap gap-2">
+   962→                {property.amenities.map((a) => (
+   963→                  <span
+   964→                    key={a.id}
+   965→                    className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 badge-glossy"
+   966→                  >
+   967→                    {a.amenity}
+   968→                  </span>
+   969→                ))}
+   970→              </div>
+   971→            </div>
+   972→          )}
+   973→
+   974→          {/* Linked Deals */}
+   975→          {property._count && property._count.deals > 0 && (
+   976→            <div className="glass-card rounded-xl p-6">
+   977→              <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+   978→                <Handshake className="w-4 h-4 text-emerald-500" />
+   979→                Linked Deals
+   980→                <span className="text-xs text-gray-400 font-normal">
+   981→                  ({property._count.deals})
+   982→                </span>
+   983→              </h2>
+   984→              {dealsLoading ? (
+   985→                <div className="space-y-2">
+   986→                  {[...Array(3)].map((_, i) => (
+   987→                    <div key={i} className="h-12 rounded-lg shimmer" />
+   988→                  ))}
+   989→                </div>
+   990→              ) : (
+   991→                <div className="overflow-x-auto custom-scrollbar">
+   992→                  <table className="w-full text-sm">
+   993→                    <thead>
+   994→                      <tr className="border-b border-emerald-100">
+   995→                        <th className="text-left py-2 text-xs font-semibold text-gray-400 uppercase">Client</th>
+   996→                        <th className="text-left py-2 text-xs font-semibold text-gray-400 uppercase">Stage</th>
+   997→                        <th className="text-left py-2 text-xs font-semibold text-gray-400 uppercase">Value</th>
+   998→                        <th className="text-left py-2 text-xs font-semibold text-gray-400 uppercase">Agent</th>
+   999→                      </tr>
+  1000→                    </thead>
+  1001→                    <tbody className="divide-y divide-emerald-50">
+  1002→                      {linkedDeals.map((deal) => (
+  1003→                        <tr
+  1004→                          key={deal.id}
+  1005→                          className="cursor-pointer table-row-hover"
+  1006→                          onClick={() => navigate('deal-detail', deal.id)}
+  1007→                        >
+  1008→                          <td className="py-2.5 text-gray-700 font-medium">
+  1009→                            {deal.client?.name || '—'}
+  1010→                          </td>
+  1011→                          <td className="py-2.5">
+  1012→                            <Badge
+  1013→                              className={cn(
+  1014→                                'badge-glossy text-[10px]',
+  1015→                                STAGE_COLORS[deal.stage]
+  1016→                              )}
+  1017→                            >
+  1018→                              {deal.stage}
+  1019→                            </Badge>
+  1020→                          </td>
+  1021→                          <td className="py-2.5 text-gray-600">
+  1022→                            {deal.dealValue
+  1023→                              ? formatPrice(deal.dealValue, 'Lakhs')
+  1024→                              : '—'}
+  1025→                          </td>
+  1026→                          <td className="py-2.5 text-gray-500 text-xs">
+  1027→                            {deal.assignedTo?.name || '—'}
+  1028→                          </td>
+  1029→                        </tr>
+  1030→                      ))}
+  1031→                    </tbody>
+  1032→                  </table>
+  1033→                </div>
+  1034→              )}
+  1035→            </div>
+  1036→          )}
+  1037→
+  1038→          {/* Linked Tasks */}
+  1039→          {property._count && property._count.tasks > 0 && (
+  1040→            <div className="glass-card rounded-xl p-6">
+  1041→              <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+  1042→                <CheckSquare2 className="w-4 h-4 text-emerald-500" />
+  1043→                Linked Tasks
+  1044→                <span className="text-xs text-gray-400 font-normal">
+  1045→                  ({property._count.tasks})
+  1046→                </span>
+  1047→              </h2>
+  1048→              {tasksLoading ? (
+  1049→                <div className="space-y-2">
+  1050→                  {[...Array(3)].map((_, i) => (
+  1051→                    <div key={i} className="h-10 rounded-lg shimmer" />
+  1052→                  ))}
+  1053→                </div>
+  1054→              ) : (
+  1055→                <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+  1056→                  {linkedTasks.map((task) => (
+  1057→                    <div
+  1058→                      key={task.id}
+  1059→                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-50/50 transition-colors"
+  1060→                    >
+  1061→                      <div
+  1062→                        className={cn(
+  1063→                          'w-2 h-2 rounded-full flex-shrink-0',
+  1064→                          task.isCompleted ? 'bg-emerald-400' : 'bg-amber-400'
+  1065→                        )}
+  1066→                      />
+  1067→                      <div className="flex-1 min-w-0">
+  1068→                        <p
+  1069→                          className={cn(
+  1070→                            'text-sm truncate',
+  1071→                            task.isCompleted
+  1072→                              ? 'text-gray-400 line-through'
+  1073→                              : 'text-gray-700'
+  1074→                          )}
+  1075→                        >
+  1076→                          {task.title}
+  1077→                        </p>
+  1078→                      </div>
+  1079→                      <Badge
+  1080→                        className={cn(
+  1081→                          'badge-glossy text-[10px]',
+  1082→                          PRIORITY_COLORS[task.priority]
+  1083→                        )}
+  1084→                      >
+  1085→                        {task.priority}
+  1086→                      </Badge>
+  1087→                      {task.dueDate && (
+  1088→                        <span className="text-[10px] text-gray-400 flex-shrink-0">
+  1089→                          {new Date(task.dueDate).toLocaleDateString('en-IN', {
+  1090→                            day: 'numeric',
+  1091→                            month: 'short',
+  1092→                          })}
+  1093→                        </span>
+  1094→                      )}
+  1095→                    </div>
+  1096→                  ))}
+  1097→                </div>
+  1098→              )}
+  1099→            </div>
+  1100→          )}
+  1101→        </div>
+  1102→
+  1103→        {/* Right Column - Sticky Cards */}
+  1104→        <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+  1105→          {/* Quick Stat Tiles */}
+  1106→          <div className="grid grid-cols-2 gap-3">
+  1107→            <QuickStatTile
+  1108→              icon={BedDouble}
+  1109→              label="Bedrooms"
+  1110→              value={property.bedrooms != null ? String(property.bedrooms) : '—'}
+  1111→              gradient="gradient-emerald"
+  1112→            />
+  1113→            <QuickStatTile
+  1114→              icon={Bath}
+  1115→              label="Bathrooms"
+  1116→              value={property.bathrooms != null ? String(property.bathrooms) : '—'}
+  1117→              gradient="gradient-sky"
+  1118→            />
+  1119→            <QuickStatTile
+  1120→              icon={Maximize2}
+  1121→              label="Carpet Area"
+  1122→              value={property.carpetArea != null ? `${property.carpetArea} sq.ft` : '—'}
+  1123→              gradient="gradient-gold"
+  1124→            />
+  1125→            <QuickStatTile
+  1126→              icon={Home}
+  1127→              label="Property Type"
+  1128→              value={property.propertyType}
+  1129→              gradient="gradient-violet"
+  1130→            />
+  1131→          </div>
+  1132→
+  1133→          {/* Property Details Card */}
+  1134→          <div className="glass-card rounded-xl p-5 space-y-4">
+  1135→            <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+  1136→              <Info className="w-4 h-4 text-emerald-500" />
+  1137→              Property Details
+  1138→            </h3>
+  1139→            <div className="space-y-3">
+  1140→              <DetailRow
+  1141→                icon={Layers}
+  1142→                label="Furnishing"
+  1143→                value={property.furnishing || '—'}
+  1144→              />
+  1145→              <DetailRow
+  1146→                icon={Compass}
+  1147→                label="Facing"
+  1148→                value={property.facing || '—'}
+  1149→              />
+  1150→              <DetailRow
+  1151→                icon={Clock}
+  1152→                label="Age"
+  1153→                value={property.ageOfProperty || '—'}
+  1154→              />
+  1155→              {property.floorNumber != null && property.totalFloors != null && (
+  1156→                <DetailRow
+  1157→                  icon={Building2}
+  1158→                  label="Floor"
+  1159→                  value={`${property.floorNumber} of ${property.totalFloors}`}
+  1160→                />
+  1161→              )}
+  1162→              <DetailRow
+  1163→                icon={Calendar}
+  1164→                label="Listed Date"
+  1165→                value={
+  1166→                  property.listedDate
+  1167→                    ? new Date(property.listedDate).toLocaleDateString('en-IN', {
+  1168→                        day: 'numeric',
+  1169→                        month: 'short',
+  1170→                        year: 'numeric',
+  1171→                      })
+  1172→                    : '—'
+  1173→                }
+  1174→              />
+  1175→              <DetailRow
+  1176→                icon={User}
+  1177→                label="Assigned Agent"
+  1178→                value={property.assignedTo?.name || '—'}
+  1179→              />
+  1180→            </div>
+  1181→          </div>
+  1182→
+  1183→          {/* Price Card */}
+  1184→          <div className="glass-card rounded-xl p-5">
+  1185→            <h3 className="font-xs text-gray-400 uppercase tracking-wider mb-2">
+  1186→              Price
+  1187→            </h3>
+  1188→            <p className="text-2xl font-bold gradient-text-primary">
+  1189→              {formatPrice(property.price, property.priceUnit)}
+  1190→            </p>
+  1191→          </div>
+  1192→
+  1193→          {/* RERA Card */}
+  1194→          {property.reraNumber && (
+  1195→            <div className="glass-card rounded-xl p-5">
+  1196→              <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
+  1197→                <Shield className="w-4 h-4 text-emerald-500" />
+  1198→                RERA Information
+  1199→              </h3>
+  1200→              <div className="space-y-2">
+  1201→                <DetailRow
+  1202→                  icon={Hash}
+  1203→                  label="RERA No."
+  1204→                  value={property.reraNumber}
+  1205→                />
+  1206→                {property.projectReraNumber && (
+  1207→                  <DetailRow
+  1208→                    icon={Hash}
+  1209→                    label="Project RERA"
+  1210→                    value={property.projectReraNumber}
+  1211→                  />
+  1212→                )}
+  1213→              </div>
+  1214→            </div>
+  1215→          )}
+  1216→
+  1217→          {/* Developer Card */}
+  1218→          {property.developerName && (
+  1219→            <div className="glass-card rounded-xl p-5">
+  1220→              <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3">
+  1221→                <Briefcase className="w-4 h-4 text-emerald-500" />
+  1222→                Developer Information
+  1223→              </h3>
+  1224→              <div className="space-y-2">
+  1225→                <DetailRow
+  1226→                  icon={Building2}
+  1227→                  label="Developer"
+  1228→                  value={property.developerName}
+  1229→                />
+  1230→                {property.projectName && (
+  1231→                  <DetailRow
+  1232→                    icon={Home}
+  1233→                    label="Project"
+  1234→                    value={property.projectName}
+  1235→                  />
+  1236→                )}
+  1237→                {property.contactPerson && (
+  1238→                  <DetailRow
+  1239→                    icon={User}
+  1240→                    label="Contact Person"
+  1241→                    value={property.contactPerson}
+  1242→                  />
+  1243→                )}
+  1244→                {property.contactPhone && (
+  1245→                  <DetailRow
+  1246→                    icon={Phone}
+  1247→                    label="Phone"
+  1248→                    value={property.contactPhone}
+  1249→                  />
+  1250→                )}
+  1251→                {property.contactEmail && (
+  1252→                  <DetailRow
+  1253→                    icon={Mail}
+  1254→                    label="Email"
+  1255→                    value={property.contactEmail}
+  1256→                  />
+  1257→                )}
+  1258→              </div>
+  1259→            </div>
+  1260→          )}
+  1261→        </div>
+  1262→      </div>
+  1263→    </div>
+  1264→  );
+  1265→}
+  1266→
+  1267→// ─── Detail Page Sub-components ───────────────────────────────────────────────
+  1268→
+  1269→function QuickStatTile({
+  1270→  icon: Icon,
+  1271→  label,
+  1272→  value,
+  1273→  gradient,
+  1274→}: {
+  1275→  icon: React.ComponentType<{ className?: string }>;
+  1276→  label: string;
+  1277→  value: string;
+  1278→  gradient: string;
+  1279→}) {
+  1280→  return (
+  1281→    <div className="glass-card rounded-xl p-4 text-center">
+  1282→      <div
+  1283→        className={cn(
+  1284→          'w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center',
+  1285→          gradient
+  1286→        )}
+  1287→      >
+  1288→        <Icon className="w-4 h-4 text-white" />
+  1289→      </div>
+  1290→      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+  1291→      <p className="text-sm font-semibold text-gray-800">{value}</p>
+  1292→    </div>
+  1293→  );
+  1294→}
+  1295→
+  1296→function DetailRow({
+  1297→  icon: Icon,
+  1298→  label,
+  1299→  value,
+  1300→}: {
+  1301→  icon: React.ComponentType<{ className?: string }>;
+  1302→  label: string;
+  1303→  value: string;
+  1304→}) {
+  1305→  return (
+  1306→    <div className="flex items-start gap-2.5">
+  1307→      <Icon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+  1308→      <div>
+  1309→        <p className="text-[11px] text-gray-400">{label}</p>
+  1310→        <p className="text-sm text-gray-700 font-medium">{value}</p>
+  1311→      </div>
+  1312→    </div>
+  1313→  );
+  1314→}
+  1315→
+  1316→// ─── PropertyForm ─────────────────────────────────────────────────────────────
+  1317→
+  1318→interface PropertyFormData {
+  1319→  title: string;
+  1320→  propertyType: string;
+  1321→  bedrooms: string;
+  1322→  bathrooms: string;
+  1323→  carpetArea: string;
+  1324→  price: string;
+  1325→  priceUnit: string;
+  1326→  floorNumber: string;
+  1327→  totalFloors: string;
+  1328→  ageOfProperty: string;
+  1329→  facing: string;
+  1330→  locality: string;
+  1331→  city: string;
+  1332→  pincode: string;
+  1333→  fullAddress: string;
+  1334→  landmark: string;
+  1335→  reraNumber: string;
+  1336→  developerName: string;
+  1337→  projectName: string;
+  1338→  contactPerson: string;
+  1339→  contactPhone: string;
+  1340→  contactEmail: string;
+  1341→  contactDesignation: string;
+  1342→  description: string;
+  1343→  amenities: string[];
+  1344→  listedDate: string;
+  1345→  assignedToId: string;
+  1346→}
+  1347→
+  1348→const INITIAL_FORM: PropertyFormData = {
+  1349→  title: '',
+  1350→  propertyType: '',
+  1351→  bedrooms: '',
+  1352→  bathrooms: '',
+  1353→  carpetArea: '',
+  1354→  price: '',
+  1355→  priceUnit: 'Lakhs',
+  1356→  floorNumber: '',
+  1357→  totalFloors: '',
+  1358→  ageOfProperty: '',
+  1359→  facing: '',
+  1360→  locality: '',
+  1361→  city: '',
+  1362→  pincode: '',
+  1363→  fullAddress: '',
+  1364→  landmark: '',
+  1365→  reraNumber: '',
+  1366→  developerName: '',
+  1367→  projectName: '',
+  1368→  contactPerson: '',
+  1369→  contactPhone: '',
+  1370→  contactEmail: '',
+  1371→  contactDesignation: '',
+  1372→  description: '',
+  1373→  amenities: [],
+  1374→  listedDate: new Date().toISOString().split('T')[0],
+  1375→  assignedToId: '',
+  1376→};
+  1377→
+  1378→export function PropertyForm() {
+  1379→  const {
+  1380→    user,
+  1381→    showPropertyForm,
+  1382→    editingProperty,
+  1383→    closePropertyForm,
+  1384→  } = useAppStore();
+  1385→
+  1386→  const [step, setStep] = useState(0);
+  1387→  const [form, setForm] = useState<PropertyFormData>(INITIAL_FORM);
+  1388→  const [errors, setErrors] = useState<Partial<Record<keyof PropertyFormData, string>>>({});
+  1389→  const [submitting, setSubmitting] = useState(false);
+  1390→  const [agents, setAgents] = useState<UserType[]>([]);
+  1391→  const scrollRef = useRef<HTMLDivElement>(null);
+  1392→
+  1393→  // Populate form when editing
+  1394→  useEffect(() => {
+  1395→    if (editingProperty) {
+  1396→      setForm({
+  1397→        title: editingProperty.title,
+  1398→        propertyType: editingProperty.propertyType,
+  1399→        bedrooms: editingProperty.bedrooms != null ? String(editingProperty.bedrooms) : '',
+  1400→        bathrooms: editingProperty.bathrooms != null ? String(editingProperty.bathrooms) : '',
+  1401→        carpetArea: editingProperty.carpetArea != null ? String(editingProperty.carpetArea) : '',
+  1402→        price: String(editingProperty.price),
+  1403→        priceUnit: editingProperty.priceUnit || 'Lakhs',
+  1404→        floorNumber: editingProperty.floorNumber != null ? String(editingProperty.floorNumber) : '',
+  1405→        totalFloors: editingProperty.totalFloors != null ? String(editingProperty.totalFloors) : '',
+  1406→        ageOfProperty: editingProperty.ageOfProperty || '',
+  1407→        facing: editingProperty.facing || '',
+  1408→        locality: editingProperty.locality,
+  1409→        city: editingProperty.city,
+  1410→        pincode: editingProperty.pincode || '',
+  1411→        fullAddress: editingProperty.fullAddress,
+  1412→        landmark: editingProperty.landmark || '',
+  1413→        reraNumber: editingProperty.reraNumber || '',
+  1414→        developerName: editingProperty.developerName || '',
+  1415→        projectName: editingProperty.projectName || '',
+  1416→        contactPerson: editingProperty.contactPerson || '',
+  1417→        contactPhone: editingProperty.contactPhone || '',
+  1418→        contactEmail: editingProperty.contactEmail || '',
+  1419→        contactDesignation: editingProperty.contactDesignation || '',
+  1420→        description: editingProperty.description || '',
+  1421→        amenities: editingProperty.amenities?.map((a) => a.amenity) || [],
+  1422→        listedDate: editingProperty.listedDate
+  1423→          ? editingProperty.listedDate.split('T')[0]
+  1424→          : new Date().toISOString().split('T')[0],
+  1425→        assignedToId: editingProperty.assignedToId || '',
+  1426→      });
+  1427→    } else {
+  1428→      setForm({
+  1429→        ...INITIAL_FORM,
+  1430→        assignedToId: user?.id || '',
+  1431→        listedDate: new Date().toISOString().split('T')[0],
+  1432→      });
+  1433→    }
+  1434→    setStep(0);
+  1435→    setErrors({});
+  1436→  }, [editingProperty, user, showPropertyForm]);
+  1437→
+  1438→  // Fetch agents for admin
+  1439→  useEffect(() => {
+  1440→    if (user?.role === 'ADMIN' && showPropertyForm) {
+  1441→      fetch('/api/users?role=AGENT&limit=100')
+  1442→        .then((r) => r.json())
+  1443→        .then((d) => {
+  1444→          if (d.users) setAgents(d.users);
+  1445→        })
+  1446→        .catch(() => {});
+  1447→    }
+  1448→  }, [user?.role, showPropertyForm]);
+  1449→
+  1450→  // Lock agent to self for agents
+  1451→  useEffect(() => {
+  1452→    if (user?.role === 'AGENT' && showPropertyForm) {
+  1453→      setForm((f) => ({ ...f, assignedToId: user.id }));
+  1454→    }
+  1455→  }, [user?.role, user?.id, showPropertyForm]);
+  1456→
+  1457→  const updateField = (field: keyof PropertyFormData, value: string) => {
+  1458→    setForm((f) => ({ ...f, [field]: value }));
+  1459→    if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
+  1460→  };
+  1461→
+  1462→  const toggleAmenity = (amenity: string) => {
+  1463→    setForm((f) => ({
+  1464→      ...f,
+  1465→      amenities: f.amenities.includes(amenity)
+  1466→        ? f.amenities.filter((a) => a !== amenity)
+  1467→        : [...f.amenities, amenity],
+  1468→    }));
+  1469→  };
+  1470→
+  1471→  const validateStep = (s: number): boolean => {
+  1472→    const e: Partial<Record<keyof PropertyFormData, string>> = {};
+  1473→    if (s === 0) {
+  1474→      if (!form.title.trim()) e.title = 'Title is required';
+  1475→      if (!form.propertyType) e.propertyType = 'Property type is required';
+  1476→      if (!form.price.trim() || Number(form.price) <= 0) e.price = 'Valid price is required';
+  1477→    }
+  1478→    if (s === 2) {
+  1479→      if (!form.locality.trim()) e.locality = 'Locality is required';
+  1480→      if (!form.city.trim()) e.city = 'City is required';
+  1481→      if (!form.fullAddress.trim()) e.fullAddress = 'Address is required';
+  1482→    }
+  1483→    setErrors(e);
+  1484→    return Object.keys(e).length === 0;
+  1485→  };
+  1486→
+  1487→  const handleNext = () => {
+  1488→    if (validateStep(step)) {
+  1489→      setStep((s) => Math.min(s + 1, FORM_STEPS.length - 1));
+  1490→      scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  1491→    }
+  1492→  };
+  1493→
+  1494→  const handleBack = () => {
+  1495→    setStep((s) => Math.max(s - 1, 0));
+  1496→    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  1497→  };
+  1498→
+  1499→  const handleSubmit = async () => {
+  1500→    if (!validateStep(step)) return;
+  1501→
+  1502→    setSubmitting(true);
+  1503→    try {
+  1504→      const payload = {
+  1505→        ...form,
+  1506→        bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
+  1507→        bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+  1508→        carpetArea: form.carpetArea ? Number(form.carpetArea) : null,
+  1509→        price: Number(form.price),
+  1510→        floorNumber: form.floorNumber ? Number(form.floorNumber) : null,
+  1511→        totalFloors: form.totalFloors ? Number(form.totalFloors) : null,
+  1512→      };
+  1513→
+  1514→      const url = editingProperty
+  1515→        ? `/api/properties?id=${editingProperty.id}`
+  1516→        : '/api/properties';
+  1517→      const method = editingProperty ? 'PUT' : 'POST';
+  1518→
+  1519→      const res = await fetch(url, {
+  1520→        method,
+  1521→        headers: { 'Content-Type': 'application/json' },
+  1522→        body: JSON.stringify(payload),
+  1523→      });
+  1524→
+  1525→      if (res.ok) {
+  1526→        closePropertyForm();
+  1527→      }
+  1528→    } catch {
+  1529→      // silent
+  1530→    } finally {
+  1531→      setSubmitting(false);
+  1532→    }
+  1533→  };
+  1534→
+  1535→  if (!showPropertyForm) return null;
+  1536→
+  1537→  return (
+  1538→    <AnimatePresence>
+  1539→      <motion.div
+  1540→        initial={{ opacity: 0 }}
+  1541→        animate={{ opacity: 1 }}
+  1542→        exit={{ opacity: 0 }}
+  1543→        className="fixed inset-0 z-50 modal-overlay flex items-start justify-center p-4 pt-8 pb-8"
+  1544→        onClick={closePropertyForm}
+  1545→      >
+  1546→        <motion.div
+  1547→          initial={{ opacity: 0, y: 30, scale: 0.97 }}
+  1548→          animate={{ opacity: 1, y: 0, scale: 1 }}
+  1549→          exit={{ opacity: 0, y: 20, scale: 0.97 }}
+  1550→          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+  1551→          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+  1552→          onClick={(e) => e.stopPropagation()}
+  1553→        >
+  1554→          {/* Header */}
+  1555→          <div className="flex items-center justify-between px-6 py-4 border-b border-emerald-100 flex-shrink-0">
+  1556→            <h2 className="text-lg font-bold text-gray-900">
+  1557→              {editingProperty ? 'Edit Property' : 'Add New Property'}
+  1558→            </h2>
+  1559→            <Button
+  1560→              variant="ghost"
+  1561→              size="icon"
+  1562→              onClick={closePropertyForm}
+  1563→              className="text-gray-400 hover:text-gray-600"
+  1564→            >
+  1565→              <X className="w-5 h-5" />
+  1566→            </Button>
+  1567→          </div>
+  1568→
+  1569→          {/* Step Tracker */}
+  1570→          <div className="px-6 pt-4 flex-shrink-0">
+  1571→            <div className="flex items-center justify-between">
+  1572→              {FORM_STEPS.map((s, i) => {
+  1573→                const isCompleted = i < step;
+  1574→                const isActive = i === step;
+  1575→                const Icon = s.icon;
+  1576→
+  1577→                return (
+  1578→                  <div key={i} className="flex-1 flex flex-col items-center">
+  1579→                    <div className="flex items-center w-full">
+  1580→                      {i > 0 && (
+  1581→                        <div
+  1582→                          className={cn(
+  1583→                            'flex-1 h-0.5 mx-1',
+  1584→                            i <= step ? 'bg-emerald-400' : 'bg-emerald-100'
+  1585→                          )}
+  1586→                        />
+  1587→                      )}
+  1588→                      <div
+  1589→                        className={cn(
+  1590→                          'w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all flex-shrink-0',
+  1591→                          isCompleted && 'step-completed text-white',
+  1592→                          isActive && 'step-active text-emerald-600',
+  1593→                          !isCompleted && !isActive && 'step-pending text-gray-400'
+  1594→                        )}
+  1595→                      >
+  1596→                        {isCompleted ? (
+  1597→                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+  1598→                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+  1599→                          </svg>
+  1600→                        ) : (
+  1601→                          <Icon className="w-4 h-4" />
+  1602→                        )}
+  1603→                      </div>
+  1604→                      {i < FORM_STEPS.length - 1 && (
+  1605→                        <div
+  1606→                          className={cn(
+  1607→                            'flex-1 h-0.5 mx-1',
+  1608→                            i < step ? 'bg-emerald-400' : 'bg-emerald-100'
+  1609→                          )}
+  1610→                        />
+  1611→                      )}
+  1612→                    </div>
+  1613→                    <span
+  1614→                      className={cn(
+  1615→                        'text-[10px] mt-1.5 text-center leading-tight hidden sm:block',
+  1616→                        isActive ? 'text-emerald-700 font-semibold' : 'text-gray-400'
+  1617→                      )}
+  1618→                    >
+  1619→                      {s.label}
+  1620→                    </span>
+  1621→                  </div>
+  1622→                );
+  1623→              })}
+  1624→            </div>
+  1625→          </div>
+  1626→
+  1627→          {/* Form Body */}
+  1628→          <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar px-6 py-5">
+  1629→            <AnimatePresence mode="wait">
+  1630→              <motion.div
+  1631→                key={step}
+  1632→                initial={{ opacity: 0, x: 20 }}
+  1633→                animate={{ opacity: 1, x: 0 }}
+  1634→                exit={{ opacity: 0, x: -20 }}
+  1635→                transition={{ duration: 0.2 }}
+  1636→              >
+  1637→                {step === 0 && (
+  1638→                  <StepOne form={form} errors={errors} updateField={updateField} />
+  1639→                )}
+  1640→                {step === 1 && (
+  1641→                  <StepTwo form={form} errors={errors} updateField={updateField} />
+  1642→                )}
+  1643→                {step === 2 && (
+  1644→                  <StepThree form={form} errors={errors} updateField={updateField} />
+  1645→                )}
+  1646→                {step === 3 && (
+  1647→                  <StepFour form={form} errors={errors} updateField={updateField} />
+  1648→                )}
+  1649→                {step === 4 && (
+  1650→                  <StepFive form={form} toggleAmenity={toggleAmenity} updateField={updateField} />
+  1651→                )}
+  1652→                {step === 5 && (
+  1653→                  <StepSix
+  1654→                    form={form}
+  1655→                    errors={errors}
+  1656→                    updateField={updateField}
+  1657→                    user={user}
+  1658→                    agents={agents}
+  1659→                  />
+  1660→                )}
+  1661→              </motion.div>
+  1662→            </AnimatePresence>
+  1663→          </div>
+  1664→
+  1665→          {/* Footer */}
+  1666→          <div className="flex items-center justify-between px-6 py-4 border-t border-emerald-100 bg-emerald-50/30 flex-shrink-0">
+  1667→            <Button
+  1668→              variant="outline"
+  1669→              onClick={handleBack}
+  1670→              disabled={step === 0}
+  1671→              className="gap-1"
+  1672→            >
+  1673→              <ChevronLeft className="w-4 h-4" />
+  1674→              Back
+  1675→            </Button>
+  1676→            {step < FORM_STEPS.length - 1 ? (
+  1677→              <Button onClick={handleNext} className="gap-1 gradient-primary border-0 text-white shadow-lg shadow-emerald-200">
+  1678→                Next
+  1679→                <ChevronRight className="w-4 h-4" />
+  1680→              </Button>
+  1681→            ) : (
+  1682→              <Button
+  1683→                onClick={handleSubmit}
+  1684→                disabled={submitting}
+  1685→                className="gap-2 gradient-primary border-0 text-white shadow-lg shadow-emerald-200 min-w-[140px]"
+  1686→              >
+  1687→                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+  1688→                {editingProperty ? 'Update Property' : 'Create Property'}
+  1689→              </Button>
+  1690→            )}
+  1691→          </div>
+  1692→        </motion.div>
+  1693→      </motion.div>
+  1694→    </AnimatePresence>
+  1695→  );
+  1696→}
+  1697→
+  1698→// ─── Form Step Components ─────────────────────────────────────────────────────
+  1699→
+  1700→function FormField({
+  1701→  label,
+  1702→  error,
+  1703→  required,
+  1704→  children,
+  1705→}: {
+  1706→  label: string;
+  1707→  error?: string;
+  1708→  required?: boolean;
+  1709→  children: React.ReactNode;
+  1710→}) {
+  1711→  return (
+  1712→    <div className="space-y-1.5">
+  1713→      <Label className="text-xs text-gray-600">
+  1714→        {label}
+  1715→        {required && <span className="text-rose-400 ml-0.5">*</span>}
+  1716→      </Label>
+  1717→      {children}
+  1718→      {error && <p className="text-[11px] text-rose-500">{error}</p>}
+  1719→    </div>
+  1720→  );
+  1721→}
+  1722→
+  1723→function StepOne({
+  1724→  form,
+  1725→  errors,
+  1726→  updateField,
+  1727→}: {
+  1728→  form: PropertyFormData;
+  1729→  errors: Partial<Record<keyof PropertyFormData, string>>;
+  1730→  updateField: (f: keyof PropertyFormData, v: string) => void;
+  1731→}) {
+  1732→  return (
+  1733→    <div className="space-y-5">
+  1734→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1735→        <FormField label="Property Title" error={errors.title} required className="sm:col-span-2">
+  1736→          <Input
+  1737→            placeholder="e.g., Spacious 3BHK in Whitefield"
+  1738→            value={form.title}
+  1739→            onChange={(e) => updateField('title', e.target.value)}
+  1740→            className={cn(errors.title && 'border-rose-300 focus-visible:ring-rose-200')}
+  1741→          />
+  1742→        </FormField>
+  1743→
+  1744→        <FormField label="Property Type" error={errors.propertyType} required>
+  1745→          <Select value={form.propertyType} onValueChange={(v) => updateField('propertyType', v)}>
+  1746→            <SelectTrigger className={cn('w-full', errors.propertyType && 'border-rose-300')}>
+  1747→              <SelectValue placeholder="Select type" />
+  1748→            </SelectTrigger>
+  1749→            <SelectContent>
+  1750→              {PROPERTY_TYPES.map((t) => (
+  1751→                <SelectItem key={t} value={t}>
+  1752→                  {t}
+  1753→                </SelectItem>
+  1754→              ))}
+  1755→            </SelectContent>
+  1756→          </Select>
+  1757→        </FormField>
+  1758→
+  1759→        <FormField label="Price" error={errors.price} required>
+  1760→          <div className="flex gap-2">
+  1761→            <Input
+  1762→              type="number"
+  1763→              placeholder="Amount"
+  1764→              value={form.price}
+  1765→              onChange={(e) => updateField('price', e.target.value)}
+  1766→              className={cn(errors.price && 'border-rose-300')}
+  1767→              min={0}
+  1768→            />
+  1769→            <Select value={form.priceUnit} onValueChange={(v) => updateField('priceUnit', v)}>
+  1770→              <SelectTrigger className="w-[110px]">
+  1771→                <SelectValue />
+  1772→              </SelectTrigger>
+  1773→              <SelectContent>
+  1774→                {PRICE_UNITS.map((u) => (
+  1775→                  <SelectItem key={u} value={u}>
+  1776→                    {u}
+  1777→                  </SelectItem>
+  1778→                ))}
+  1779→              </SelectContent>
+  1780→            </Select>
+  1781→          </div>
+  1782→        </FormField>
+  1783→
+  1784→        <FormField label="BHK / Bedrooms">
+  1785→          <Input
+  1786→            type="number"
+  1787→            placeholder="e.g., 3"
+  1788→            value={form.bedrooms}
+  1789→            onChange={(e) => updateField('bedrooms', e.target.value)}
+  1790→            min={0}
+  1791→          />
+  1792→        </FormField>
+  1793→
+  1794→        <FormField label="Bathrooms">
+  1795→          <Input
+  1796→            type="number"
+  1797→            placeholder="e.g., 2"
+  1798→            value={form.bathrooms}
+  1799→            onChange={(e) => updateField('bathrooms', e.target.value)}
+  1800→            min={0}
+  1801→          />
+  1802→        </FormField>
+  1803→
+  1804→        <FormField label="Carpet Area (sq.ft)">
+  1805→          <Input
+  1806→            type="number"
+  1807→            placeholder="e.g., 1200"
+  1808→            value={form.carpetArea}
+  1809→            onChange={(e) => updateField('carpetArea', e.target.value)}
+  1810→            min={0}
+  1811→          />
+  1812→        </FormField>
+  1813→
+  1814→        <FormField label="Floor Number">
+  1815→          <Input
+  1816→            type="number"
+  1817→            placeholder="e.g., 4"
+  1818→            value={form.floorNumber}
+  1819→            onChange={(e) => updateField('floorNumber', e.target.value)}
+  1820→            min={0}
+  1821→          />
+  1822→        </FormField>
+  1823→
+  1824→        <FormField label="Total Floors">
+  1825→          <Input
+  1826→            type="number"
+  1827→            placeholder="e.g., 12"
+  1828→            value={form.totalFloors}
+  1829→            onChange={(e) => updateField('totalFloors', e.target.value)}
+  1830→            min={0}
+  1831→          />
+  1832→        </FormField>
+  1833→      </div>
+  1834→    </div>
+  1835→  );
+  1836→}
+  1837→
+  1838→function StepTwo({
+  1839→  form,
+  1840→  errors,
+  1841→  updateField,
+  1842→}: {
+  1843→  form: PropertyFormData;
+  1844→  errors: Partial<Record<keyof PropertyFormData, string>>;
+  1845→  updateField: (f: keyof PropertyFormData, v: string) => void;
+  1846→}) {
+  1847→  return (
+  1848→    <div className="space-y-5">
+  1849→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1850→        <FormField label="Age of Property">
+  1851→          <Select value={form.ageOfProperty} onValueChange={(v) => updateField('ageOfProperty', v)}>
+  1852→            <SelectTrigger className="w-full">
+  1853→              <SelectValue placeholder="Select age" />
+  1854→            </SelectTrigger>
+  1855→            <SelectContent>
+  1856→              {AGE_OPTIONS.map((a) => (
+  1857→                <SelectItem key={a} value={a}>
+  1858→                  {a}
+  1859→                </SelectItem>
+  1860→              ))}
+  1861→            </SelectContent>
+  1862→          </Select>
+  1863→        </FormField>
+  1864→
+  1865→        <FormField label="Facing Direction">
+  1866→          <Select value={form.facing} onValueChange={(v) => updateField('facing', v)}>
+  1867→            <SelectTrigger className="w-full">
+  1868→              <SelectValue placeholder="Select direction" />
+  1869→            </SelectTrigger>
+  1870→            <SelectContent>
+  1871→              {FACING_OPTIONS.map((f) => (
+  1872→                <SelectItem key={f} value={f}>
+  1873→                  {f}
+  1874→                </SelectItem>
+  1875→              ))}
+  1876→            </SelectContent>
+  1877→          </Select>
+  1878→        </FormField>
+  1879→      </div>
+  1880→    </div>
+  1881→  );
+  1882→}
+  1883→
+  1884→function StepThree({
+  1885→  form,
+  1886→  errors,
+  1887→  updateField,
+  1888→}: {
+  1889→  form: PropertyFormData;
+  1890→  errors: Partial<Record<keyof PropertyFormData, string>>;
+  1891→  updateField: (f: keyof PropertyFormData, v: string) => void;
+  1892→}) {
+  1893→  return (
+  1894→    <div className="space-y-5">
+  1895→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1896→        <FormField label="Locality" error={errors.locality} required>
+  1897→          <Input
+  1898→            placeholder="e.g., Whitefield"
+  1899→            value={form.locality}
+  1900→            onChange={(e) => updateField('locality', e.target.value)}
+  1901→            className={cn(errors.locality && 'border-rose-300')}
+  1902→          />
+  1903→        </FormField>
+  1904→
+  1905→        <FormField label="City" error={errors.city} required>
+  1906→          <Input
+  1907→            placeholder="e.g., Bangalore"
+  1908→            value={form.city}
+  1909→            onChange={(e) => updateField('city', e.target.value)}
+  1910→            className={cn(errors.city && 'border-rose-300')}
+  1911→          />
+  1912→        </FormField>
+  1913→
+  1914→        <FormField label="Pincode">
+  1915→          <Input
+  1916→            placeholder="e.g., 560066"
+  1917→            value={form.pincode}
+  1918→            onChange={(e) => updateField('pincode', e.target.value)}
+  1919→            maxLength={6}
+  1920→          />
+  1921→        </FormField>
+  1922→
+  1923→        <FormField label="Landmark">
+  1924→          <Input
+  1925→            placeholder="e.g., Near ITPL"
+  1926→            value={form.landmark}
+  1927→            onChange={(e) => updateField('landmark', e.target.value)}
+  1928→          />
+  1929→        </FormField>
+  1930→      </div>
+  1931→
+  1932→      <FormField label="Full Address" error={errors.fullAddress} required>
+  1933→        <Textarea
+  1934→          placeholder="Complete property address"
+  1935→          value={form.fullAddress}
+  1936→          onChange={(e) => updateField('fullAddress', e.target.value)}
+  1937→          className={cn(errors.fullAddress && 'border-rose-300')}
+  1938→          rows={3}
+  1939→        />
+  1940→      </FormField>
+  1941→    </div>
+  1942→  );
+  1943→}
+  1944→
+  1945→function StepFour({
+  1946→  form,
+  1947→  errors,
+  1948→  updateField,
+  1949→}: {
+  1950→  form: PropertyFormData;
+  1951→  errors: Partial<Record<keyof PropertyFormData, string>>;
+  1952→  updateField: (f: keyof PropertyFormData, v: string) => void;
+  1953→}) {
+  1954→  return (
+  1955→    <div className="space-y-5">
+  1956→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1957→        <FormField label="RERA Number">
+  1958→          <Input
+  1959→            placeholder="e.g., PRM/KA/RERA/1234/2024"
+  1960→            value={form.reraNumber}
+  1961→            onChange={(e) => updateField('reraNumber', e.target.value)}
+  1962→          />
+  1963→        </FormField>
+  1964→
+  1965→        <FormField label="Developer Name">
+  1966→          <Input
+  1967→            placeholder="e.g., Prestige Group"
+  1968→            value={form.developerName}
+  1969→            onChange={(e) => updateField('developerName', e.target.value)}
+  1970→          />
+  1971→        </FormField>
+  1972→
+  1973→        <FormField label="Project Name">
+  1974→          <Input
+  1975→            placeholder="e.g., Prestige Shantiniketan"
+  1976→            value={form.projectName}
+  1977→            onChange={(e) => updateField('projectName', e.target.value)}
+  1978→          />
+  1979→        </FormField>
+  1980→
+  1981→        <FormField label="Contact Person">
+  1982→          <Input
+  1983→            placeholder="e.g., Ravi Kumar"
+  1984→            value={form.contactPerson}
+  1985→            onChange={(e) => updateField('contactPerson', e.target.value)}
+  1986→          />
+  1987→        </FormField>
+  1988→
+  1989→        <FormField label="Phone">
+  1990→          <Input
+  1991→            placeholder="e.g., +91 98765 43210"
+  1992→            value={form.contactPhone}
+  1993→            onChange={(e) => updateField('contactPhone', e.target.value)}
+  1994→          />
+  1995→        </FormField>
+  1996→
+  1997→        <FormField label="Email">
+  1998→          <Input
+  1999→            type="email"
+  2000→            placeholder="e.g., contact@developer.com"
+
+[showing lines 1-2000 of 2109; use offset=2001 with limit to continue reading]

@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  avatar    String?
+  role      String   @default("AGENT") // ADMIN, AGENT
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  properties    Property[]
+  clients       Client[]
+  deals         Deal[]
+  tasks         Task[]
+  notifications Notification[]
+  activities    Activity[]
+}
+
+model Property {
+  id              String   @id @default(cuid())
+  propertyId      String?  // Custom property ID like PROP-001
+  title           String
+  propertyType    String   // Apartment, Villa, Penthouse, Commercial, Plot, Studio
+  bedrooms        Int?
+  bathrooms       Int?
+  carpetArea      Float?
+  builtUpArea     Float?
+  price           Float
+  priceUnit       String   @default("Lakhs") // Lakhs, Crore
+  floorNumber     Int?
+  totalFloors     Int?
+  ageOfProperty   String?  // New, 0-5, 5-10, 10-20, 20+
+  facing          String?  // N, NE, E, SE, S, SW, W, NW
+  locality        String
+  city            String
+  pincode         String?
+  fullAddress     String
+  landmark        String?
+  latitude        Float?
+  longitude       Float?
+  reraNumber      String?
+  developerName   String?
+  projectName     String?
+  projectReraNumber String?
+  contactPerson   String?
+  contactPhone    String?
+  contactEmail    String?
+  contactDesignation String?
+  description     String?
+  furnishing      String?
+  youtubeUrl      String?
+  status          String   @default("Active") // Active, Pending, Sold
+  assignedToId    String
+  listedDate      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assignedTo  User       @relation(fields: [assignedToId], references: [id])
+  amenities   PropertyAmenity[]
+  photos      PropertyPhoto[]
+  deals       Deal[]
+  tasks       Task[]
+}
+
+model PropertyAmenity {
+  id         String   @id @default(cuid())
+  propertyId String
+  amenity    String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, amenity])
+}
+
+model PropertyPhoto {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model Client {
+  id                String   @id @default(cuid())
+  name              String
+  phone             String
+  alternatePhone    String?
+  email             String?
+  avatar            String?
+  clientType        String   // Buyer, Seller, Tenant, Landlord, Investor
+  priority          String   @default("Warm") // Hot, Warm, Cold
+  budgetMin         Float?
+  budgetMax         Float?
+  preferredLocation String?
+  preferredType     String?
+  preferredBeds     Int?
+  preferredFurnish  String?
+  leadSource        String?  // Website, Referral, Social Media, Walk-in, Advertisement, JustDial, MagicBricks, 99Acres, Housing.com, Other
+  status            String   @default("New Lead") // New Lead, Contacted, Site Visit Scheduled, Negotiation, Closed Won, Closed Lost, Inactive
+  notes             String?
+  reminderDate      DateTime?
+  reminderNote      String?
+  reminderDone      Boolean  @default(false)
+  assignedToId      String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  assignedTo User  @relation(fields: [assignedToId], references: [id])
+  deals      Deal[]
+  tasks      Task[]
+}
+
+model Deal {
+  id               String   @id @default(cuid())
+  propertyId       String
+  clientId         String
+  stage            String   @default("Lead") // Lead, Site Visit, Negotiation, Token Advance, Booking, Closed
+  dealValue        Float?
+  expectedCloseDate DateTime?
+  notes            String?
+  assignedToId     String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  property  Property @relation(fields: [propertyId], references: [id])
+  client    Client   @relation(fields: [clientId], references: [id])
+  assignedTo User    @relation(fields: [assignedToId], references: [id])
+  tasks     Task[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  priority    String   @default("Medium") // High, Medium, Low
+  isCompleted Boolean  @default(false)
+  assignedToId   String
+  propertyId  String?
+  clientId    String?
+  dealId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignedTo User     @relation(fields: [assignedToId], references: [id])
+  property   Property? @relation(fields: [propertyId], references: [id])
+  client     Client?   @relation(fields: [clientId], references: [id])
+  deal       Deal?     @relation(fields: [dealId], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // deal_stage_change, task_due, new_lead, etc.
+  title       String
+  description String?
+  isRead      Boolean  @default(false)
+  linkTo      String?  // e.g. "property:abc123"
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  userId      String
+  entityType  String   // Property, Client, Deal, Task
+  entityId    String
+  action      String   // created, updated, status_changed, deleted
+  description String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

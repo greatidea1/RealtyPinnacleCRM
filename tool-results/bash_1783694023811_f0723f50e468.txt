@@ -1,0 +1,582 @@
+[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[log] [HMR] connected
+[error] ./src/components/crm/AuthScreen.tsx:5:1
+Export Login doesn't exist in target module
+  3 | import { useState } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { Login, UserPlus, Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { motion } from 'framer-motion';
+  7 | import { cn } from '@/lib/utils';
+  8 |
+
+The export Login was not found in module [project]/node_modules/lucide-react/dist/esm/lucide-react.js [app-client] (ecmascript).
+Did you mean to import LogIn?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/AuthScreen.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/AuthScreen.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/AuthScreen.tsx:5:1
+Export Login doesn't exist in target module
+  3 | import { useState } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { Login, UserPlus, Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { motion } from 'framer-motion';
+  7 | import { cn } from '@/lib/utils';
+  8 |
+
+The export Login was not found in module [project]/node_modules/lucide-react/dist/esm/lucide-react.js [app-ssr] (ecmascript).
+Did you mean to import LogIn?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/AuthScreen.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/AuthScreen.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/DealsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, LayoutGrid, List, ArrowLeft, Pencil, Trash2, Calendar, Handshake, MapPin, User } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/DealsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/DealsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/DealsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, LayoutGrid, List, ArrowLeft, Pencil, Trash2, Calendar, Handshake, MapPin, User } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/DealsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/DealsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/SettingsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { User, Shield, Mail, Phone, Key, UserPlus, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+  7 | import { Button } from '@/components/ui/button';
+  8 | import { Input } from '@/components/ui/input';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/SettingsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/SettingsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/SettingsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { User, Shield, Mail, Phone, Key, UserPlus, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+  7 | import { Button } from '@/components/ui/button';
+  8 | import { Input } from '@/components/ui/input';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/SettingsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/SettingsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/TasksPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, PRIORITY_COLORS, type Task, formatPriceShort, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, CheckSquare2, Clock, AlertTriangle, ArrowLeft, Pencil, Trash2, Link as LinkIcon, Calendar } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/TasksPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/TasksPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/TasksPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, PRIORITY_COLORS, type Task, formatPriceShort, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, CheckSquare2, Clock, AlertTriangle, ArrowLeft, Pencil, Trash2, Link as LinkIcon, Calendar } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/TasksPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/TasksPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[log] [Fast Refresh] rebuilding
+[clear] console.clear
+[error] ./src/components/crm/AuthScreen.tsx:5:1
+Export Login doesn't exist in target module
+  3 | import { useState } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { Login, UserPlus, Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { motion } from 'framer-motion';
+  7 | import { cn } from '@/lib/utils';
+  8 |
+
+The export Login was not found in module [project]/node_modules/lucide-react/dist/esm/lucide-react.js [app-client] (ecmascript).
+Did you mean to import LogIn?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/AuthScreen.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/AuthScreen.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/AuthScreen.tsx:5:1
+Export Login doesn't exist in target module
+  3 | import { useState } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { Login, UserPlus, Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { motion } from 'framer-motion';
+  7 | import { cn } from '@/lib/utils';
+  8 |
+
+The export Login was not found in module [project]/node_modules/lucide-react/dist/esm/lucide-react.js [app-ssr] (ecmascript).
+Did you mean to import LogIn?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/AuthScreen.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/AuthScreen.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/DealsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, LayoutGrid, List, ArrowLeft, Pencil, Trash2, Calendar, Handshake, MapPin, User } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/DealsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/DealsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/DealsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, LayoutGrid, List, ArrowLeft, Pencil, Trash2, Calendar, Handshake, MapPin, User } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/DealsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/DealsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/SettingsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { User, Shield, Mail, Phone, Key, UserPlus, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+  7 | import { Button } from '@/components/ui/button';
+  8 | import { Input } from '@/components/ui/input';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/SettingsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/SettingsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/SettingsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { User, Shield, Mail, Phone, Key, UserPlus, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+  7 | import { Button } from '@/components/ui/button';
+  8 | import { Input } from '@/components/ui/input';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/SettingsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/SettingsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/TasksPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, PRIORITY_COLORS, type Task, formatPriceShort, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, CheckSquare2, Clock, AlertTriangle, ArrowLeft, Pencil, Trash2, Link as LinkIcon, Calendar } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/TasksPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/TasksPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/TasksPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, PRIORITY_COLORS, type Task, formatPriceShort, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, CheckSquare2, Clock, AlertTriangle, ArrowLeft, Pencil, Trash2, Link as LinkIcon, Calendar } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/TasksPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/TasksPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[clear] console.clear
+[error] ./src/components/crm/AuthScreen.tsx:5:1
+Export Login doesn't exist in target module
+  3 | import { useState } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { Login, UserPlus, Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { motion } from 'framer-motion';
+  7 | import { cn } from '@/lib/utils';
+  8 |
+
+The export Login was not found in module [project]/node_modules/lucide-react/dist/esm/lucide-react.js [app-client] (ecmascript).
+Did you mean to import LogIn?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/AuthScreen.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/AuthScreen.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/AuthScreen.tsx:5:1
+Export Login doesn't exist in target module
+  3 | import { useState } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { Login, UserPlus, Home, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { motion } from 'framer-motion';
+  7 | import { cn } from '@/lib/utils';
+  8 |
+
+The export Login was not found in module [project]/node_modules/lucide-react/dist/esm/lucide-react.js [app-ssr] (ecmascript).
+Did you mean to import LogIn?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/AuthScreen.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/AuthScreen.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/DealsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, LayoutGrid, List, ArrowLeft, Pencil, Trash2, Calendar, Handshake, MapPin, User } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/DealsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/DealsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/DealsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, LayoutGrid, List, ArrowLeft, Pencil, Trash2, Calendar, Handshake, MapPin, User } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/DealsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/DealsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/SettingsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { User, Shield, Mail, Phone, Key, UserPlus, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+  7 | import { Button } from '@/components/ui/button';
+  8 | import { Input } from '@/components/ui/input';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/SettingsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/SettingsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/SettingsPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { User, Shield, Mail, Phone, Key, UserPlus, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+  7 | import { Button } from '@/components/ui/button';
+  8 | import { Input } from '@/components/ui/input';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/SettingsPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/SettingsPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/TasksPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, PRIORITY_COLORS, type Task, formatPriceShort, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, CheckSquare2, Clock, AlertTriangle, ArrowLeft, Pencil, Trash2, Link as LinkIcon, Calendar } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-client] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/TasksPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/TasksPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[error] ./src/components/crm/TasksPage.tsx:5:1
+Export cn doesn't exist in target module
+  3 | import { useState, useEffect, useCallback } from 'react';
+  4 | import { useAppStore } from '@/lib/store';
+> 5 | import { cn, PRIORITY_COLORS, type Task, formatPriceShort, getInitials, getAvatarColor } from '@/lib/types';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { Plus, CheckSquare2, Clock, AlertTriangle, ArrowLeft, Pencil, Trash2, Link as LinkIcon, Calendar } from 'lucide-react';
+  7 | import { Badge } from '@/components/ui/badge';
+  8 | import { Button } from '@/components/ui/button';
+
+The export cn was not found in module [project]/src/lib/types.ts [app-ssr] (ecmascript).
+Did you mean to import getInitials?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/crm/TasksPage.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/crm/TasksPage.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+[log] [Fast Refresh] rebuilding
