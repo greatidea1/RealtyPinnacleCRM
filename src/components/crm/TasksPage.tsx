@@ -49,13 +49,13 @@ export function TasksPage() {
   };
 
   const getDueDateColor = (dueDate?: string, isCompleted?: boolean) => {
-    if (isCompleted) return 'text-gray-500';
-    if (!dueDate) return 'text-gray-500';
+    if (isCompleted) return 'text-muted-foreground';
+    if (!dueDate) return 'text-muted-foreground';
     const today = todayISODate();
     const d = toISTDateString(dueDate);
     if (d < today) return 'text-rose-400';
     if (d === today) return 'text-amber-400';
-    return 'text-gray-400';
+    return 'text-muted-foreground';
   };
 
   const tabs: { key: FilterTab; label: string }[] = [
@@ -67,41 +67,41 @@ export function TasksPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4 max-w-[1600px] mx-auto">
-        <div className="h-8 w-48 shimmer rounded-lg" />
-        <div className="h-10 w-96 shimmer rounded-xl" />
+      <div className="p-4 sm:p-6 space-y-4 max-w-[1600px] mx-auto">
+        <div className="h-8 w-48 max-w-full shimmer rounded-lg" />
+        <div className="h-10 w-full max-w-sm shimmer rounded-xl" />
         {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 shimmer rounded-xl" />)}
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Tasks</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Tasks</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={() => openTaskForm()}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-primary text-white text-sm font-medium shadow-lg shadow-cyan-900/30 hover:shadow-cyan-800/40 transition-all"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl gradient-primary text-white text-sm font-medium shadow-lg shadow-cyan-900/30 hover:shadow-cyan-800/40 transition-all self-start"
         >
           <Plus className="w-4 h-4" /> Add Task
         </button>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 p-1 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] w-fit">
+      <div className="flex items-center gap-2 p-1 rounded-xl bg-muted border border-border w-full sm:w-fit overflow-x-auto custom-scrollbar">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setFilter(tab.key)}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0',
               filter === tab.key
                 ? 'bg-cyan-500/15 text-cyan-400 shadow-sm'
-                : 'text-gray-400 hover:text-gray-300 hover:bg-[#252839]'
+                : 'text-muted-foreground hover:text-foreground/80 hover:bg-accent'
             )}
           >
             {tab.label}
@@ -113,11 +113,11 @@ export function TasksPage() {
       <div className="space-y-2">
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#1a1d2b] flex items-center justify-center mb-4">
-              <CheckSquare2 className="w-8 h-8 text-gray-600" />
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <CheckSquare2 className="w-8 h-8 text-muted-foreground/70" />
             </div>
-            <h3 className="text-base font-semibold text-gray-400 mb-1">No tasks found</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="text-base font-semibold text-muted-foreground mb-1">No tasks found</h3>
+            <p className="text-sm text-muted-foreground">
               {filter === 'completed' ? 'No completed tasks yet' : 'All caught up! Create a new task to get started.'}
             </p>
           </div>
@@ -137,10 +137,10 @@ export function TasksPage() {
               <button
                 onClick={() => toggleTask(task)}
                 className={cn(
-                  'w-5 h-5 rounded-md border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all',
+                  'w-7 h-7 rounded-md border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all',
                   task.isCompleted
                     ? 'bg-cyan-600 border-cyan-600'
-                    : 'border-[#3a3d4a] group-hover:border-cyan-500'
+                    : 'border-border group-hover:border-cyan-500'
                 )}
               >
                 {task.isCompleted && <span className="text-white text-xs font-bold">&#10003;</span>}
@@ -150,12 +150,12 @@ export function TasksPage() {
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   'text-sm font-medium',
-                  task.isCompleted ? 'line-through text-gray-500' : 'text-white'
+                  task.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
                 )}>
                   {task.title}
                 </p>
                 {task.description && (
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{task.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>
                 )}
                 <div className="flex items-center gap-3 mt-2 flex-wrap">
                   {task.dueDate && (
@@ -165,12 +165,12 @@ export function TasksPage() {
                     </span>
                   )}
                   {task.property && (
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <Building2 className="w-3 h-3" /> {task.property.title}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+                      <Building2 className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{task.property.title}</span>
                     </span>
                   )}
                   {task.client && (
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <User className="w-3 h-3" /> {task.client.name}
                     </span>
                   )}
@@ -178,19 +178,21 @@ export function TasksPage() {
               </div>
 
               {/* Right side */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium badge-glossy', PRIORITY_COLORS[task.priority])}>
                   {task.priority}
                 </span>
                 <button
                   onClick={() => openTaskForm(task)}
-                  className="p-1.5 rounded-lg hover:bg-[#1e2235] text-gray-500 hover:text-cyan-400 transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-2 min-h-9 min-w-9 rounded-lg hover:bg-secondary text-muted-foreground hover:text-cyan-400 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label="Edit task"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => openDeleteDialog('task', task.id, task.title)}
-                  className="p-1.5 rounded-lg hover:bg-rose-500/10 text-gray-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-2 min-h-9 min-w-9 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-400 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label="Delete task"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -262,49 +264,49 @@ export function TaskForm() {
 
   return (
     <Dialog open={showTaskForm} onOpenChange={(open) => { if (!open) closeTaskForm(); }}>
-      <DialogContent className="max-w-lg bg-[#1e2130] border-[#2a2d3a] text-white">
+      <DialogContent className="sm:max-w-xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden bg-popover border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-white">{editingTask ? 'Edit Task' : 'Add New Task'}</DialogTitle>
+          <DialogTitle className="text-foreground pr-8">{editingTask ? 'Edit Task' : 'Add New Task'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           {error && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">{error}</div>}
 
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Title *</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Title *</Label>
             <input
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors"
+              className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
               placeholder="Follow up with client..."
             />
           </div>
 
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Description</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Description</Label>
             <textarea
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors resize-none"
+              className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors resize-none"
               placeholder="Add details..."
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Due Date</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Due Date</Label>
               <input
                 type="date"
                 value={form.dueDate}
                 onChange={e => setForm({ ...form, dueDate: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white outline-none focus:border-cyan-500/50 transition-colors"
+                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground outline-none focus:border-cyan-500/50 transition-colors"
               />
             </div>
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Priority</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Priority</Label>
               <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v as TaskPriority })}>
-                <SelectTrigger className="bg-[#1a1d2b] border-[#2a2d3a] text-white">
+                <SelectTrigger className="bg-muted border-border text-foreground w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -317,9 +319,9 @@ export function TaskForm() {
           </div>
 
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Linked Property (Optional)</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Linked Property (Optional)</Label>
             <Select value={form.propertyId} onValueChange={v => setForm({ ...form, propertyId: v })}>
-              <SelectTrigger className="bg-[#1a1d2b] border-[#2a2d3a] text-white">
+              <SelectTrigger className="bg-muted border-border text-foreground w-full">
                 <SelectValue placeholder="Select property..." />
               </SelectTrigger>
               <SelectContent>
@@ -331,9 +333,9 @@ export function TaskForm() {
           </div>
 
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Linked Client (Optional)</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Linked Client (Optional)</Label>
             <Select value={form.clientId} onValueChange={v => setForm({ ...form, clientId: v })}>
-              <SelectTrigger className="bg-[#1a1d2b] border-[#2a2d3a] text-white">
+              <SelectTrigger className="bg-muted border-border text-foreground w-full">
                 <SelectValue placeholder="Select client..." />
               </SelectTrigger>
               <SelectContent>
@@ -347,7 +349,7 @@ export function TaskForm() {
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={closeTaskForm}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a] hover:bg-[#252839] transition-colors"
+              className="px-4 py-2.5 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border hover:bg-accent transition-colors"
             >
               Cancel
             </button>

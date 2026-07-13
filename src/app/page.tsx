@@ -17,6 +17,7 @@ import { SettingsPage } from '@/components/crm/SettingsPage';
 import { DeleteDialog } from '@/components/crm/DeleteDialog';
 import { ClientForm } from '@/components/crm/ClientForm';
 
+/** Authenticated CRM shell: sidebar, top bar, and page router. */
 export default function Home() {
   const { currentPage, isAuthenticated } = useAppStore();
 
@@ -59,7 +60,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0f1117] overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
@@ -74,4 +75,4 @@ export default function Home() {
       <DeleteDialog />
     </div>
   );
-}
+} // end Home

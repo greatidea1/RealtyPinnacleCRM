@@ -69,7 +69,7 @@ export function ClientDetail() {
   };
 
   if (loading) return <div className="p-6"><div className="h-96 shimmer rounded-2xl" /></div>;
-  if (!client) return <div className="p-8 text-center text-gray-500">Client not found</div>;
+  if (!client) return <div className="p-8 text-center text-muted-foreground">Client not found</div>;
 
   const isOwner = client.assignedToId === user?.id || user?.role === 'ADMIN';
   const hasBudget = client.budgetMin || client.budgetMax;
@@ -77,7 +77,7 @@ export function ClientDetail() {
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <button onClick={goBack} className="flex items-center gap-2 text-sm text-gray-500 hover:text-cyan-400 transition-colors">
+        <button onClick={goBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-cyan-400 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Clients
         </button>
         {isOwner && (
@@ -97,7 +97,7 @@ export function ClientDetail() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                  <h1 className="text-xl font-bold text-white truncate">{client.name}</h1>
+                  <h1 className="text-xl font-bold text-foreground truncate">{client.name}</h1>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className={cn('text-[11px] px-2 py-0.5 rounded-full border font-medium badge-glossy', TYPE_COLORS[client.clientType])}>{client.clientType}</span>
                     <span className={cn('text-[11px] px-2 py-0.5 rounded-full border font-medium badge-glossy', PRIORITY_COLORS[client.priority])}>{client.priority}</span>
@@ -112,16 +112,16 @@ export function ClientDetail() {
           </div>
 
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-sm font-bold text-white mb-4">Contact Information</h2>
+            <h2 className="text-sm font-bold text-foreground mb-4">Contact Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InfoItem icon={Phone} label="Phone" value={client.phone} />
               {client.alternatePhone && <InfoItem icon={Phone} label="Alt Phone" value={client.alternatePhone} />}
               {client.email && <InfoItem icon={Mail} label="Email" value={client.email} />}
               {client.leadSource && <InfoItem icon={User} label="Lead Source" value={client.leadSource} />}
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#1a1f30] flex items-center justify-center flex-shrink-0 mt-0.5"><CheckCircle2 className="w-4 h-4 text-emerald-400" /></div>
+                <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center flex-shrink-0 mt-0.5"><CheckCircle2 className="w-4 h-4 text-emerald-400" /></div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Status</p>
+                  <p className="text-xs text-muted-foreground mb-1">Status</p>
                   <span className={cn('text-[11px] px-2.5 py-1 rounded-full border font-medium badge-glossy', CLIENT_STATUS_COLORS[client.status])}>{client.status}</span>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export function ClientDetail() {
           </div>
 
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-sm font-bold text-white mb-4">Requirements</h2>
+            <h2 className="text-sm font-bold text-foreground mb-4">Requirements</h2>
             {hasBudget ? (
               <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-cyan-500/5 to-blue-500/5 border border-cyan-500/15">
                 <p className="text-xs text-cyan-400 font-medium mb-1">Budget Range</p>
@@ -139,7 +139,7 @@ export function ClientDetail() {
                   {client.budgetMax ? formatPrice(client.budgetMax, 'Lakhs') : ''}
                 </p>
               </div>
-            ) : <div className="mb-5 p-4 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a]"><p className="text-xs text-gray-500">No budget specified</p></div>}
+            ) : <div className="mb-5 p-4 rounded-xl bg-muted border border-border"><p className="text-xs text-muted-foreground">No budget specified</p></div>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {client.preferredLocation && <InfoItem icon={MapPin} label="Location" value={client.preferredLocation} />}
               {client.preferredType && <InfoItem icon={Building2} label="Type" value={client.preferredType} />}
@@ -151,28 +151,28 @@ export function ClientDetail() {
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-2 space-y-6">
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-sm font-bold text-white mb-3">Notes</h2>
-            {client.notes ? <div className="bg-[#1a1d2b] rounded-xl p-4 max-h-48 overflow-y-auto custom-scrollbar"><p className="text-sm text-gray-400 whitespace-pre-wrap leading-relaxed">{client.notes}</p></div> : <p className="text-sm text-gray-500 text-center py-4">No notes</p>}
+            <h2 className="text-sm font-bold text-foreground mb-3">Notes</h2>
+            {client.notes ? <div className="bg-muted rounded-xl p-4 max-h-48 overflow-y-auto custom-scrollbar"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{client.notes}</p></div> : <p className="text-sm text-muted-foreground text-center py-4">No notes</p>}
           </div>
 
           {client.reminderDate && (
             <div className={cn('glass-card rounded-2xl p-6', client.reminderDone && 'opacity-60')}>
-              <div className="flex items-center gap-2 mb-3"><Bell className="w-4 h-4 text-amber-400" /><h2 className="text-sm font-bold text-white">Reminder</h2>
+              <div className="flex items-center gap-2 mb-3"><Bell className="w-4 h-4 text-amber-400" /><h2 className="text-sm font-bold text-foreground">Reminder</h2>
                 {client.reminderDone && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">Done</span>}
               </div>
-              <p className="text-sm text-gray-300 mb-1">{formatDateLong(client.reminderDate)}</p>
-              {client.reminderNote && <p className="text-xs text-gray-500 mb-3">{client.reminderNote}</p>}
+              <p className="text-sm text-foreground/80 mb-1">{formatDateLong(client.reminderDate)}</p>
+              {client.reminderNote && <p className="text-xs text-muted-foreground mb-3">{client.reminderNote}</p>}
               {!client.reminderDone && <button onClick={handleMarkReminderDone} disabled={markingDone} className="w-full py-2 rounded-xl gradient-primary text-white text-sm font-medium border-0 shadow-sm hover:shadow-md transition-all"><CheckCircle2 className="w-4 h-4 mr-2" />{markingDone ? 'Marking...' : 'Mark Done'}</button>}
             </div>
           )}
 
           {deals.length > 0 && (
             <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Handshake className="w-4 h-4 text-amber-400" />Deals ({deals.length})</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Handshake className="w-4 h-4 text-amber-400" />Deals ({deals.length})</h2>
               <div className="space-y-2">
                 {deals.map(d => (
-                  <button key={d.id} onClick={() => navigate('deal-detail', d.id)} className="w-full text-left p-3 rounded-xl hover:bg-[#1a1f30] transition-colors flex items-center justify-between">
-                    <div><p className="text-sm text-white font-medium">{d.property?.title || '—'}</p><p className="text-xs text-gray-500">{d.property?.locality}</p></div>
+                  <button key={d.id} onClick={() => navigate('deal-detail', d.id)} className="w-full text-left p-3 rounded-xl hover:bg-sidebar-accent transition-colors flex items-center justify-between">
+                    <div><p className="text-sm text-foreground font-medium">{d.property?.title || '—'}</p><p className="text-xs text-muted-foreground">{d.property?.locality}</p></div>
                     <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium badge-glossy', STAGE_COLORS[d.stage])}>{d.stage}</span>
                   </button>
                 ))}
@@ -181,7 +181,7 @@ export function ClientDetail() {
           )}
 
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-sm font-bold text-white mb-4">Quick Stats</h2>
+            <h2 className="text-sm font-bold text-foreground mb-4">Quick Stats</h2>
             <div className="grid grid-cols-2 gap-3">
               <StatBox label="Total Deals" value={String(client._count?.deals || 0)} />
               <StatBox label="Tasks" value={String(client._count?.tasks || 0)} />
@@ -198,12 +198,12 @@ export function ClientDetail() {
 function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-[#1a1f30] flex items-center justify-center flex-shrink-0 mt-0.5"><Icon className="w-4 h-4 text-cyan-400" /></div>
-      <div><p className="text-xs text-gray-500 mb-0.5">{label}</p><p className="text-sm font-medium text-gray-300">{value}</p></div>
+      <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center flex-shrink-0 mt-0.5"><Icon className="w-4 h-4 text-cyan-400" /></div>
+      <div><p className="text-xs text-muted-foreground mb-0.5">{label}</p><p className="text-sm font-medium text-foreground/80">{value}</p></div>
     </div>
   );
 }
 
 function StatBox({ label, value }: { label: string; value: string }) {
-  return (<div className="bg-[#1a1d2b] rounded-xl p-3 text-center border border-[#2a2d3a]"><p className="text-lg font-bold text-white">{value}</p><p className="text-[11px] text-gray-500 mt-0.5">{label}</p></div>);
+  return (<div className="bg-muted rounded-xl p-3 text-center border border-border"><p className="text-lg font-bold text-foreground">{value}</p><p className="text-[11px] text-muted-foreground mt-0.5">{label}</p></div>);
 }

@@ -37,17 +37,17 @@ export function DeleteDialog() {
 
   return (
     <Dialog open={showDeleteDialog} onOpenChange={(open) => { if (!open) closeDeleteDialog(); }}>
-      <DialogContent className="max-w-md bg-[#1e2130] border-[#2a2d3a] text-white">
+      <DialogContent className="sm:max-w-md w-full overflow-x-hidden bg-popover border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
+          <DialogTitle className="flex items-center gap-2 text-foreground pr-6">
             <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="w-5 h-5 text-rose-400" />
             </div>
-            Delete {deleteTarget?.type || 'Item'}?
+            <span className="min-w-0">Delete {deleteTarget?.type || 'Item'}?</span>
           </DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-gray-400 mt-2">
-          Are you sure you want to delete <span className="text-white font-semibold">&ldquo;{deleteTarget?.name}&rdquo;</span>? This action cannot be undone.
+        <p className="text-sm text-muted-foreground mt-2 break-words">
+          Are you sure you want to delete <span className="text-foreground font-semibold">&ldquo;{deleteTarget?.name}&rdquo;</span>? This action cannot be undone.
         </p>
         {error && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">{error}</div>
@@ -55,7 +55,7 @@ export function DeleteDialog() {
         <div className="flex justify-end gap-3 mt-4">
           <button
             onClick={closeDeleteDialog}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a] hover:bg-[#252839] transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border hover:bg-accent transition-colors"
           >
             Cancel
           </button>

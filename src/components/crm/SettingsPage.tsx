@@ -33,8 +33,8 @@ export function SettingsPage() {
   }, [user]);
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-white">Settings</h1>
+    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold text-foreground">Settings</h1>
 
       {/* Profile Section */}
       <ProfileSection user={user} />
@@ -91,7 +91,7 @@ function ProfileSection({ user }: { user: any }) {
   return (
     <div className="glass-card rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-base font-bold text-white">Profile</h2>
+        <h2 className="text-base font-bold text-foreground">Profile</h2>
         {!editing && (
           <button onClick={startEdit} className="flex items-center gap-1.5 text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
             <Pencil className="w-3.5 h-3.5" /> Edit
@@ -104,8 +104,8 @@ function ProfileSection({ user }: { user: any }) {
           {getInitials(user?.name || 'U')}
         </div>
         <div>
-          <h3 className="text-lg font-bold text-white">{user?.name}</h3>
-          <p className="text-sm text-gray-400">{user?.email}</p>
+          <h3 className="text-lg font-bold text-foreground">{user?.name}</h3>
+          <p className="text-sm text-muted-foreground">{user?.email}</p>
           <div className="flex items-center gap-2 mt-1">
             <span className={cn(
               'text-[10px] px-2 py-0.5 rounded-full border font-medium',
@@ -114,7 +114,7 @@ function ProfileSection({ user }: { user: any }) {
               {user?.role}
             </span>
             {user?.createdAt && (
-              <span className="text-[11px] text-gray-500 flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <Calendar className="w-3 h-3" /> Joined {formatDate(user.createdAt, { month: 'short', year: 'numeric' })}
               </span>
             )}
@@ -135,32 +135,32 @@ function ProfileSection({ user }: { user: any }) {
       {editing ? (
         <div className="space-y-4">
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Full Name</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Full Name</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors" />
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors" />
             </div>
           </div>
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Email</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors" />
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors" />
             </div>
           </div>
           <div>
-            <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Phone</Label>
+            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Phone</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors"
-                placeholder="+91 98765 43210" />
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
+                placeholder="Phone" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setEditing(false)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a] hover:bg-[#252839] transition-colors">Cancel</button>
+            <button onClick={() => setEditing(false)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border hover:bg-accent transition-colors">Cancel</button>
             <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white gradient-primary shadow-lg shadow-cyan-900/30">
               <Save className="w-4 h-4" /> Save
             </button>
@@ -168,17 +168,17 @@ function ProfileSection({ user }: { user: any }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-3 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a]">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Name</p>
-            <p className="text-sm text-white">{user?.name}</p>
+          <div className="p-3 rounded-xl bg-muted border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Name</p>
+            <p className="text-sm text-foreground">{user?.name}</p>
           </div>
-          <div className="p-3 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a]">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Email</p>
-            <p className="text-sm text-white">{user?.email}</p>
+          <div className="p-3 rounded-xl bg-muted border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Email</p>
+            <p className="text-sm text-foreground">{user?.email}</p>
           </div>
-          <div className="p-3 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a]">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Phone</p>
-            <p className="text-sm text-white">{user?.phone || 'Not set'}</p>
+          <div className="p-3 rounded-xl bg-muted border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Phone</p>
+            <p className="text-sm text-foreground">{user?.phone || 'Not set'}</p>
           </div>
         </div>
       )}
@@ -215,7 +215,7 @@ function ChangePasswordSection({ user }: { user: any }) {
     <div className="glass-card rounded-2xl p-6">
       <div className="flex items-center gap-2 mb-6">
         <Key className="w-4 h-4 text-cyan-400" />
-        <h2 className="text-base font-bold text-white">Change Password</h2>
+        <h2 className="text-base font-bold text-foreground">Change Password</h2>
       </div>
 
       {msg && (
@@ -230,28 +230,28 @@ function ChangePasswordSection({ user }: { user: any }) {
 
       <div className="space-y-4 max-w-md">
         <div>
-          <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Current Password</Label>
+          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Current Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input type="password" value={form.current} onChange={e => setForm({ ...form, current: e.target.value })}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors" />
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors" />
           </div>
         </div>
         <div>
-          <Label className="text-xs font-medium text-gray-400 mb-1.5 block">New Password</Label>
+          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">New Password</Label>
           <div className="relative">
-            <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input type="password" value={form.newPw} onChange={e => setForm({ ...form, newPw: e.target.value })}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
               placeholder="Min 6 characters" />
           </div>
         </div>
         <div>
-          <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Confirm New Password</Label>
+          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Confirm New Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input type="password" value={form.confirm} onChange={e => setForm({ ...form, confirm: e.target.value })}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors" />
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors" />
           </div>
         </div>
         <button onClick={handleChange} disabled={loading}
@@ -264,27 +264,41 @@ function ChangePasswordSection({ user }: { user: any }) {
   );
 }
 
-/* Admin User Management */
+/* Admin User Management — invite-only account creation */
 function UserManagement({ users, loading, onRefresh }: { users: UserType[]; loading: boolean; onRefresh: () => void }) {
   const { user } = useAppStore();
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'AGENT' as UserRole, phone: '' });
+  const [addForm, setAddForm] = useState({ name: '', email: '', role: 'AGENT' as UserRole, phone: '', password: '' });
   const [addMsg, setAddMsg] = useState('');
+  const [createdPassword, setCreatedPassword] = useState('');
 
   const handleAdd = async () => {
     if (!addForm.name || !addForm.email) { setAddMsg('Name and email are required'); return; }
+    if (addForm.password && addForm.password.length < 6) {
+      setAddMsg('Temporary password must be at least 6 characters');
+      return;
+    }
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user?.id, ...addForm }),
+        body: JSON.stringify({
+          adminId: user?.id,
+          name: addForm.name,
+          email: addForm.email,
+          role: addForm.role,
+          phone: addForm.phone || undefined,
+          password: addForm.password || undefined,
+        }),
       });
       const data = await res.json();
-      if (data.error) { setAddMsg(data.error); return; }
-      setAddMsg(`User created. Default password: Welcome@123`);
-      setAddForm({ name: '', email: '', role: 'AGENT', phone: '' });
+      if (data.error) { setAddMsg(data.error); setCreatedPassword(''); return; }
+      const temp = data.temporaryPassword || 'Welcome@123';
+      setCreatedPassword(temp);
+      setAddMsg(`Invite created for ${data.user.email}. Share the temporary password below.`);
+      setAddForm({ name: '', email: '', role: 'AGENT', phone: '', password: '' });
       onRefresh();
-    } catch { setAddMsg('Failed to create user'); }
+    } catch { setAddMsg('Failed to invite user'); setCreatedPassword(''); }
   };
 
   const toggleActive = async (u: UserType) => {
@@ -311,49 +325,55 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
 
   return (
     <div className="glass-card rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2 flex-wrap">
           <Shield className="w-4 h-4 text-cyan-400" />
-          <h2 className="text-base font-bold text-white">User Management</h2>
-          <span className="text-xs text-gray-500 ml-1">{users.length} users</span>
+          <h2 className="text-base font-bold text-foreground">User Management</h2>
+          <span className="text-xs text-muted-foreground">{users.length} users</span>
         </div>
-        <button onClick={() => { setShowAdd(true); setAddMsg(''); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white gradient-primary shadow-lg shadow-cyan-900/30">
-          <Plus className="w-4 h-4" /> Add User
+        <button onClick={() => { setShowAdd(true); setAddMsg(''); setCreatedPassword(''); }}
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white gradient-primary shadow-lg shadow-cyan-900/30 self-start">
+          <Plus className="w-4 h-4" /> Invite User
         </button>
       </div>
 
-      {/* Add User Dialog */}
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-md bg-[#1e2130] border-[#2a2d3a] text-white">
+      <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) { setAddMsg(''); setCreatedPassword(''); } }}>
+        <DialogContent className="sm:max-w-md w-full overflow-x-hidden bg-popover border-border text-foreground">
           <DialogHeader>
-            <DialogTitle className="text-white">Create New User</DialogTitle>
+            <DialogTitle className="text-foreground pr-8">Invite User</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             {addMsg && (
               <div className={cn('p-3 rounded-xl text-sm',
-                addMsg.includes('password') || addMsg.includes('Default')
+                createdPassword || addMsg.includes('Invite created')
                   ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
                   : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
-              )}>{addMsg}</div>
+              )}>
+                {addMsg}
+                {createdPassword && (
+                  <p className="mt-2 font-mono text-sm text-foreground bg-muted rounded-lg px-3 py-2 border border-border break-all">
+                    {createdPassword}
+                  </p>
+                )}
+              </div>
             )}
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Full Name *</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Full Name *</Label>
               <input value={addForm.name} onChange={e => setAddForm({ ...addForm, name: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors"
-                placeholder="John Doe" />
+                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
+                placeholder="Full name" />
             </div>
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Email *</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email *</Label>
               <input type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors"
-                placeholder="agent@propcrm.com" />
+                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
+                placeholder="Email" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Role</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Role</Label>
                 <Select value={addForm.role} onValueChange={v => setAddForm({ ...addForm, role: v as UserRole })}>
-                  <SelectTrigger className="bg-[#1a1d2b] border-[#2a2d3a] text-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-muted border-border text-foreground w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="AGENT">Agent</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
@@ -361,19 +381,25 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
                 </Select>
               </div>
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1.5 block">Phone</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Phone</Label>
                 <input value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors"
-                  placeholder="+91 98765 43210" />
+                  className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
+                  placeholder="Phone" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 bg-[#1a1d2b] p-2.5 rounded-lg border border-[#2a2d3a]">
-              Default password will be set to <span className="text-cyan-400 font-mono font-medium">Welcome@123</span>. The user should change it after first login.
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Temporary password (optional)</Label>
+              <input type="text" value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
+                placeholder="Defaults to Welcome@123" />
+            </div>
+            <p className="text-xs text-muted-foreground bg-muted p-2.5 rounded-lg border border-border">
+              Share the email and temporary password with the invitee. They should change it after first login.
             </p>
             <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a] hover:bg-[#252839] transition-colors">Cancel</button>
+              <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border hover:bg-accent transition-colors">Close</button>
               <button onClick={handleAdd} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white gradient-primary shadow-lg shadow-cyan-900/30">
-                <Plus className="w-4 h-4" /> Create User
+                <Plus className="w-4 h-4" /> Send Invite
               </button>
             </div>
           </div>
@@ -389,12 +415,12 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#2a2d3a]">
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">User</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Role</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Status</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Created</th>
-                <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Actions</th>
+              <tr className="border-b border-border">
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">User</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Role</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Status</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Created</th>
+                <th className="text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -403,7 +429,7 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
                   key={u.id}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="border-b border-[#1e2235] hover:bg-[#1a1d2b]/50 transition-colors"
+                  className="border-b border-secondary hover:bg-muted/50 transition-colors"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -411,8 +437,8 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
                         {getInitials(u.name)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-white">{u.name}</p>
-                        <p className="text-xs text-gray-500">{u.email}</p>
+                        <p className="text-sm font-medium text-foreground">{u.name}</p>
+                        <p className="text-xs text-muted-foreground">{u.email}</p>
                       </div>
                     </div>
                   </td>
@@ -438,13 +464,13 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
                         'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors',
                         u.isActive
                           ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                          : 'bg-gray-500/15 text-gray-400 border-gray-500/30'
+                          : 'bg-gray-500/15 text-muted-foreground border-gray-500/30'
                       )}
                     >
                       {u.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
                     {formatDate(u.createdAt)}
                   </td>
                   <td className="px-4 py-3 text-right">

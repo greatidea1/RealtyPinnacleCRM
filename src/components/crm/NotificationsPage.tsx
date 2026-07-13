@@ -80,28 +80,28 @@ export function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4 max-w-3xl mx-auto">
-        <div className="h-8 w-48 shimmer rounded-lg" />
-        <div className="h-10 w-96 shimmer rounded-xl" />
+      <div className="p-4 sm:p-6 space-y-4 max-w-3xl mx-auto">
+        <div className="h-8 w-48 max-w-full shimmer rounded-lg" />
+        <div className="h-10 w-full max-w-sm shimmer rounded-xl" />
         {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 shimmer rounded-xl" />)}
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Notifications</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
           </p>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors self-start"
           >
             <CheckCheck className="w-4 h-4" /> Mark all as read
           </button>
@@ -109,16 +109,16 @@ export function NotificationsPage() {
       </div>
 
       {/* Type Filters */}
-      <div className="flex items-center gap-2 p-1 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] w-fit">
+      <div className="flex items-center gap-2 p-1 rounded-xl bg-muted border border-border w-full sm:w-fit overflow-x-auto custom-scrollbar">
         {typeFilters.map(f => (
           <button
             key={f.key}
             onClick={() => setTypeFilter(f.key)}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0',
               typeFilter === f.key
                 ? 'bg-cyan-500/15 text-cyan-400 shadow-sm'
-                : 'text-gray-400 hover:text-gray-300 hover:bg-[#252839]'
+                : 'text-muted-foreground hover:text-foreground/80 hover:bg-accent'
             )}
           >
             {f.label}
@@ -130,11 +130,11 @@ export function NotificationsPage() {
       <div className="space-y-2">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-[#1a1d2b] flex items-center justify-center mb-4">
-              <Bell className="w-8 h-8 text-gray-600" />
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <Bell className="w-8 h-8 text-muted-foreground/70" />
             </div>
-            <h3 className="text-base font-semibold text-gray-400 mb-1">No notifications</h3>
-            <p className="text-sm text-gray-500">You&apos;re all up to date</p>
+            <h3 className="text-base font-semibold text-muted-foreground mb-1">No notifications</h3>
+            <p className="text-sm text-muted-foreground">You&apos;re all up to date</p>
           </div>
         ) : (
           filtered.map((notif, i) => (
@@ -153,14 +153,14 @@ export function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   'text-sm',
-                  !notif.isRead ? 'font-semibold text-white' : 'text-gray-300'
+                  !notif.isRead ? 'font-semibold text-foreground' : 'text-foreground/80'
                 )}>
                   {notif.title}
                 </p>
                 {notif.description && (
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notif.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.description}</p>
                 )}
-                <p className="text-[11px] text-gray-600 mt-1.5">{timeAgo(notif.createdAt)}</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1.5">{timeAgo(notif.createdAt)}</p>
               </div>
               {!notif.isRead && (
                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 mt-1.5 flex-shrink-0 soft-pulse" />

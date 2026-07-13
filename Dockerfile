@@ -36,12 +36,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/bootstrap-admin.js ./scripts/bootstrap-admin.js
 COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 
-# Only the Prisma CLI (cached) — not a full npm ci. Needed for migrate deploy.
+# Prisma CLI + bcrypt for migrate/admin bootstrap (cached).
 RUN --mount=type=cache,target=/root/.npm \
-  npm install --omit=dev --no-audit --no-fund prisma@6.11.1 \
-  && chown -R nextjs:nodejs /app/node_modules
+  npm install --omit=dev --no-audit --no-fund prisma@6.11.1 bcryptjs@3.0.3 \
+  && chown -R nextjs:nodejs /app/node_modules /app/scripts
 
 USER nextjs
 EXPOSE 3000

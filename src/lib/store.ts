@@ -18,6 +18,8 @@ interface AppState {
   // Sidebar
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  mobileNavOpen: boolean;
+  setMobileNavOpen: (open: boolean) => void;
 
   // Modals
   showPropertyForm: boolean;
@@ -71,7 +73,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   previousPage: 'dashboard',
   navigate: (page, id) => {
     const { currentPage } = get();
-    set({ previousPage: currentPage, currentPage: page, selectedId: id || null });
+    set({ previousPage: currentPage, currentPage: page, selectedId: id || null, mobileNavOpen: false });
   },
   goBack: () => {
     const { previousPage } = get();
@@ -81,6 +83,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Sidebar
   sidebarCollapsed: false,
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  mobileNavOpen: false,
+  setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
 
   // Property form
   showPropertyForm: false,

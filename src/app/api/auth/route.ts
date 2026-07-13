@@ -18,18 +18,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ user: safeUser });
     }
 
-    if (action === 'register') {
-      const { name, email, password } = body;
-      const existing = await db.user.findUnique({ where: { email } });
-      if (existing) return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
-      const hashed = await hash(password, 10);
-      const user = await db.user.create({
-        data: { name, email, password: hashed, role: 'AGENT' },
-      });
-      const { password: _, ...safeUser } = user;
-      return NextResponse.json({ user: safeUser }, { status: 201 });
-    }
-
     if (action === 'forgot-password') {
       const { email } = body;
       const user = await db.user.findUnique({ where: { email } });

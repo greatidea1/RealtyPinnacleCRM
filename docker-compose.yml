@@ -18,6 +18,9 @@ services:
       HOSTNAME: "0.0.0.0"
       TZ: Asia/Kolkata
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-realtypinnacle}?schema=public
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
     depends_on:
       db:
         condition: service_healthy

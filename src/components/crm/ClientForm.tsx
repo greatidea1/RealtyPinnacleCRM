@@ -135,88 +135,88 @@ export function ClientForm() {
     finally { setSubmitting(false); }
   };
 
-  const darkInput = "h-10 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/50 transition-colors";
+  const darkInput = "h-10 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors";
 
   return (
     <Dialog open={showClientForm} onOpenChange={(open) => { if (!open) closeClientForm(); }}>
-      <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden bg-[#1e2130] border-[#2a2d3a]">
+      <DialogContent className="sm:max-w-xl w-full p-0 gap-0 overflow-hidden bg-popover border-border">
         {/* Step Tracker */}
-        <div className="px-6 pt-6 pb-4 border-b border-[#232738]">
+        <div className="px-6 pt-6 pb-4 border-b border-border min-w-0">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white">
+            <DialogTitle className="text-lg font-bold text-foreground pr-8">
               {editingClient ? 'Edit Client' : 'New Client'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
+            <DialogDescription className="text-xs text-muted-foreground">
               Step {step + 1} of {STEPS.length} — {STEPS[step].label}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center justify-between mt-4 relative">
-            <div className="absolute top-4 left-[calc(12.5%+8px)] right-[calc(12.5%+8px)] h-0.5 bg-[#232738] z-0" />
+          <div className="flex items-center justify-between mt-4 relative min-w-0 overflow-hidden">
+            <div className="absolute top-4 left-[calc(12.5%+8px)] right-[calc(12.5%+8px)] h-0.5 bg-sidebar-border z-0" />
             <div className="absolute top-4 left-[calc(12.5%+8px)] h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 z-0 transition-all duration-300"
               style={{ width: step === 0 ? '0%' : `${(step / (STEPS.length - 1)) * 100}%` }} />
             {STEPS.map((s, i) => (
-              <div key={s.key} className="relative z-10 flex flex-col items-center gap-1.5">
-                <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-                  i < step ? 'step-completed text-white' : i === step ? 'step-active text-cyan-400' : 'step-pending text-gray-500')}>
+              <div key={s.key} className="relative z-10 flex flex-col items-center gap-1.5 min-w-0 flex-1">
+                <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all flex-shrink-0',
+                  i < step ? 'step-completed text-foreground' : i === step ? 'step-active text-cyan-400' : 'step-pending text-muted-foreground')}>
                   {i < step ? <Check className="w-4 h-4" /> : <s.icon className="w-3.5 h-3.5" />}
                 </div>
-                <span className={cn('text-[10px] font-medium hidden sm:block', i <= step ? 'text-cyan-400' : 'text-gray-500')}>{s.label}</span>
+                <span className={cn('text-[10px] font-medium hidden sm:block truncate max-w-full px-0.5', i <= step ? 'text-cyan-400' : 'text-muted-foreground')}>{s.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
               {step === 0 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Full Name <span className="text-rose-500">*</span></Label>
-                    <Input placeholder="e.g. Rajesh Kumar" value={form.name} onChange={e => updateField('name', e.target.value)} className={darkInput} />
+                    <Label className="text-xs font-medium text-muted-foreground">Full Name <span className="text-rose-500">*</span></Label>
+                    <Input placeholder="Full name" value={form.name} onChange={e => updateField('name', e.target.value)} className={darkInput} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Phone Number <span className="text-rose-500">*</span></Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Phone Number <span className="text-rose-500">*</span></Label>
                     <Input placeholder="9876543210" value={form.phone} onChange={e => updateField('phone', e.target.value.replace(/[^\d]/g, '').slice(0, 10))} className={darkInput} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Alternate Phone</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Alternate Phone</Label>
                     <Input placeholder="Optional" value={form.alternatePhone} onChange={e => updateField('alternatePhone', e.target.value.replace(/[^\d]/g, '').slice(0, 10))} className={darkInput} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Email</Label>
-                    <Input type="email" placeholder="email@example.com" value={form.email} onChange={e => updateField('email', e.target.value)} className={darkInput} />
+                    <Label className="text-xs font-medium text-muted-foreground">Email</Label>
+                    <Input type="email" placeholder="Email" value={form.email} onChange={e => updateField('email', e.target.value)} className={darkInput} />
                   </div>
                 </div>
               )}
               {step === 1 && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-400">Client Type <span className="text-rose-500">*</span></Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Client Type <span className="text-rose-500">*</span></Label>
                       <Select value={form.clientType} onValueChange={v => updateField('clientType', v)}>
-                        <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue /></SelectTrigger>
                         <SelectContent>{CLIENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-400">Priority</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Priority</Label>
                       <Select value={form.priority} onValueChange={v => updateField('priority', v)}>
-                        <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue /></SelectTrigger>
                         <SelectContent>{PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label className="text-xs font-medium text-gray-400">Min Budget (Lakhs)</Label><Input type="number" placeholder="30" value={form.budgetMin} onChange={e => updateField('budgetMin', e.target.value)} className={darkInput} min="0" /></div>
-                    <div className="space-y-2"><Label className="text-xs font-medium text-gray-400">Max Budget (Lakhs)</Label><Input type="number" placeholder="80" value={form.budgetMax} onChange={e => updateField('budgetMax', e.target.value)} className={darkInput} min="0" /></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label className="text-xs font-medium text-muted-foreground">Min Budget (Lakhs)</Label><Input type="number" placeholder="30" value={form.budgetMin} onChange={e => updateField('budgetMin', e.target.value)} className={darkInput} min="0" /></div>
+                    <div className="space-y-2"><Label className="text-xs font-medium text-muted-foreground">Max Budget (Lakhs)</Label><Input type="number" placeholder="80" value={form.budgetMax} onChange={e => updateField('budgetMax', e.target.value)} className={darkInput} min="0" /></div>
                   </div>
-                  <div className="space-y-2"><Label className="text-xs font-medium text-gray-400">Preferred Location</Label><Input placeholder="e.g. Whitefield, Koramangala" value={form.preferredLocation} onChange={e => updateField('preferredLocation', e.target.value)} className={darkInput} /></div>
+                  <div className="space-y-2"><Label className="text-xs font-medium text-muted-foreground">Preferred Location</Label><Input placeholder="Preferred location" value={form.preferredLocation} onChange={e => updateField('preferredLocation', e.target.value)} className={darkInput} /></div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-400">Property Type</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Property Type</Label>
                       <Select value={form.preferredType} onValueChange={v => updateField('preferredType', v)}>
-                        <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue placeholder="Any" /></SelectTrigger>
+                        <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue placeholder="Any" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Apartment">Apartment</SelectItem><SelectItem value="Villa">Villa</SelectItem>
                           <SelectItem value="Penthouse">Penthouse</SelectItem><SelectItem value="Commercial">Commercial</SelectItem>
@@ -225,16 +225,16 @@ export function ClientForm() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-400">Bedrooms</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Bedrooms</Label>
                       <Select value={form.preferredBeds} onValueChange={v => updateField('preferredBeds', v)}>
-                        <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue placeholder="Any" /></SelectTrigger>
+                        <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue placeholder="Any" /></SelectTrigger>
                         <SelectContent>{BED_OPTIONS.map(b => <SelectItem key={b} value={String(b)}>{b} BHK</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-400">Furnishing</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Furnishing</Label>
                       <Select value={form.preferredFurnish} onValueChange={v => updateField('preferredFurnish', v)}>
-                        <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue placeholder="Any" /></SelectTrigger>
+                        <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue placeholder="Any" /></SelectTrigger>
                         <SelectContent>{FURNISH_OPTIONS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
@@ -244,16 +244,16 @@ export function ClientForm() {
               {step === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Lead Source</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Lead Source</Label>
                     <Select value={form.leadSource} onValueChange={v => updateField('leadSource', v)}>
-                      <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue placeholder="Select source" /></SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue placeholder="Select source" /></SelectTrigger>
                       <SelectContent>{LEAD_SOURCES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Status <span className="text-rose-500">*</span></Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Status <span className="text-rose-500">*</span></Label>
                     <Select value={form.status} onValueChange={v => updateField('status', v)}>
-                      <SelectTrigger className="h-10 rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white w-full"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-xl bg-muted border-border text-foreground w-full"><SelectValue /></SelectTrigger>
                       <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
@@ -262,16 +262,16 @@ export function ClientForm() {
               {step === 3 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Notes</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Notes</Label>
                     <Textarea placeholder="Any notes about this client..." value={form.notes} onChange={e => updateField('notes', e.target.value)} rows={3}
-                      className="min-h-[100px] rounded-xl bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50 resize-none" />
+                      className="min-h-[100px] rounded-xl bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50 resize-none" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Reminder Date</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Reminder Date</Label>
                     <Input type="datetime-local" value={form.reminderDate} onChange={e => updateField('reminderDate', e.target.value)} className={darkInput} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-400">Reminder Note</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Reminder Note</Label>
                     <Input placeholder="What to remember?" value={form.reminderNote} onChange={e => updateField('reminderNote', e.target.value)} className={darkInput} />
                   </div>
                 </div>
@@ -281,16 +281,16 @@ export function ClientForm() {
           {errors && <p className="text-xs text-rose-400 mt-3 bg-rose-500/10 px-3 py-2 rounded-lg border border-rose-500/20">{errors}</p>}
         </div>
 
-        <div className="px-6 py-4 border-t border-[#232738] bg-[#13151e]/50 flex items-center justify-between">
-          <button onClick={closeClientForm} className="text-sm text-gray-500 hover:text-gray-300">Cancel</button>
-          <div className="flex items-center gap-2">
+        <div className="px-6 py-4 border-t border-border bg-sidebar/50 flex items-center justify-between gap-2 min-w-0">
+          <button onClick={closeClientForm} className="text-sm text-muted-foreground hover:text-foreground/80 flex-shrink-0">Cancel</button>
+          <div className="flex items-center gap-2 flex-shrink-0">
             {step > 0 && (
-              <button onClick={handleBack} className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a] hover:bg-[#252839]">
+              <button onClick={handleBack} className="px-4 py-2 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border hover:bg-accent inline-flex items-center">
                 <ChevronLeft className="w-4 h-4 mr-1" />Back
               </button>
             )}
             {step < STEPS.length - 1 && (
-              <button onClick={handleNext} className="px-4 py-2 rounded-xl text-sm font-medium text-white gradient-primary shadow-sm">
+              <button onClick={handleNext} className="px-4 py-2 rounded-xl text-sm font-medium text-white gradient-primary shadow-sm inline-flex items-center">
                 Next <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             )}

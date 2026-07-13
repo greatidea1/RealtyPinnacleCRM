@@ -3,7 +3,7 @@ import { getHoursIST } from '@/lib/datetime';
 export type UserRole = 'ADMIN' | 'AGENT';
 
 export type PageView =
-  | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email'
+  | 'login' | 'forgot-password' | 'reset-password' | 'verify-email'
   | 'dashboard' | 'properties' | 'property-detail' | 'clients' | 'client-detail'
   | 'deals' | 'deal-detail' | 'tasks' | 'notifications' | 'settings'
   | 'search-results';

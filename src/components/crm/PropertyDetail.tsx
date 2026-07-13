@@ -48,15 +48,15 @@ export function PropertyDetail() {
   }, [selectedId, user]);
 
   if (loading) return <div className="p-6"><div className="h-96 shimmer rounded-2xl" /></div>;
-  if (!property) return <div className="p-8 text-center text-gray-400">Property not found</div>;
+  if (!property) return <div className="p-8 text-center text-muted-foreground">Property not found</div>;
 
   const isOwner = property.assignedToId === user?.id || user?.role === 'ADMIN';
   const youtubeEmbedId = property.youtubeUrl ? getYoutubeId(property.youtubeUrl) : null;
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={goBack} className="flex items-center gap-2 text-sm text-gray-500 hover:text-cyan-400 transition-colors">
+    <div className="p-4 sm:p-6 max-w-[1600px] mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <button onClick={goBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-cyan-400 transition-colors self-start">
           <ArrowLeft className="w-4 h-4" /> Back to Properties
         </button>
         {isOwner && (
@@ -77,30 +77,30 @@ export function PropertyDetail() {
               <div className="absolute top-4 left-4">
                 <Badge className={cn('badge-glossy', STATUS_COLORS[property.status])}>{property.status}</Badge>
               </div>
-              <div className="absolute bottom-4 left-4 right-4 text-white">
+              <div className="absolute bottom-4 left-4 right-4 text-foreground">
                 <h1 className="text-2xl font-bold drop-shadow-lg">{property.title}</h1>
-                <p className="text-sm text-white/80 mt-1 flex items-center gap-1"><MapPin className="w-4 h-4" />{property.fullAddress}</p>
+                <p className="text-sm text-foreground/80 mt-1 flex items-center gap-1"><MapPin className="w-4 h-4" />{property.fullAddress}</p>
               </div>
             </div>
           ) : (
             <div className="relative rounded-2xl overflow-hidden h-80 gradient-primary flex items-center justify-center">
-              <Building2 className="w-20 h-20 text-white/20" />
+              <Building2 className="w-20 h-20 text-foreground/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute top-4 left-4">
                 <Badge className={cn('badge-glossy', STATUS_COLORS[property.status])}>{property.status}</Badge>
               </div>
-              <div className="absolute bottom-4 left-4 right-4 text-white">
+              <div className="absolute bottom-4 left-4 right-4 text-foreground">
                 <h1 className="text-2xl font-bold drop-shadow-lg">{property.title}</h1>
-                <p className="text-sm text-white/80 mt-1 flex items-center gap-1"><MapPin className="w-4 h-4" />{property.fullAddress}</p>
+                <p className="text-sm text-foreground/80 mt-1 flex items-center gap-1"><MapPin className="w-4 h-4" />{property.fullAddress}</p>
               </div>
             </div>
           )}
 
           {/* Photo Gallery */}
           {property.photos && property.photos.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {property.photos.slice(1, 5).map(p => (
-                <div key={p.id} className="h-24 rounded-xl overflow-hidden border border-[#2a2d3a]">
+                <div key={p.id} className="h-24 rounded-xl overflow-hidden border border-border">
                   <img src={p.url} alt="" className="w-full h-full object-cover" />
                 </div>
               ))}
@@ -114,8 +114,8 @@ export function PropertyDetail() {
                 <Tag className="w-5 h-5 text-cyan-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-500">Property ID</p>
-                <p className="text-lg font-bold text-white font-mono">{property.propertyId}</p>
+                <p className="text-xs text-muted-foreground">Property ID</p>
+                <p className="text-lg font-bold text-foreground font-mono">{property.propertyId}</p>
               </div>
             </div>
           )}
@@ -123,7 +123,7 @@ export function PropertyDetail() {
           {/* YouTube Video */}
           {youtubeEmbedId && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Youtube className="w-4 h-4 text-rose-400" />Property Video</h3>
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Youtube className="w-4 h-4 text-rose-400" />Property Video</h3>
               <div className="aspect-video rounded-xl overflow-hidden">
                 <iframe src={`https://www.youtube.com/embed/${youtubeEmbedId}`} className="w-full h-full" allowFullScreen title="Property video" />
               </div>
@@ -133,21 +133,21 @@ export function PropertyDetail() {
           {/* Description */}
           {property.description && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-2">Description</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">{property.description}</p>
+              <h3 className="text-sm font-bold text-foreground mb-2">Description</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{property.description}</p>
             </div>
           )}
 
           {/* Linked Deals */}
           {deals.length > 0 && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Handshake className="w-4 h-4 text-amber-500" />Linked Deals ({deals.length})</h3>
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Handshake className="w-4 h-4 text-amber-500" />Linked Deals ({deals.length})</h3>
               <div className="space-y-2">
                 {deals.map(d => (
-                  <button key={d.id} onClick={() => navigate('deal-detail', d.id)} className="w-full text-left p-3 rounded-xl hover:bg-[#1a1f30] transition-colors flex items-center justify-between">
+                  <button key={d.id} onClick={() => navigate('deal-detail', d.id)} className="w-full text-left p-3 rounded-xl hover:bg-sidebar-accent transition-colors flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-white font-medium">{d.client?.name || '—'}</p>
-                      <p className="text-xs text-gray-500">{d.stage}</p>
+                      <p className="text-sm text-foreground font-medium">{d.client?.name || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{d.stage}</p>
                     </div>
                     <span className="text-sm font-bold gradient-text-gold">{d.dealValue ? formatPrice(d.dealValue, 'Lakhs') : '—'}</span>
                   </button>
@@ -159,14 +159,14 @@ export function PropertyDetail() {
           {/* Linked Tasks */}
           {tasks.length > 0 && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><CheckSquare2 className="w-4 h-4 text-cyan-400" />Linked Tasks ({tasks.length})</h3>
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><CheckSquare2 className="w-4 h-4 text-cyan-400" />Linked Tasks ({tasks.length})</h3>
               <div className="space-y-2">
                 {tasks.map(t => (
-                  <div key={t.id} className={cn('flex items-center gap-3 p-2.5 rounded-lg', t.isCompleted ? 'opacity-50' : 'bg-[#1a1d2b]/50')}>
-                    <div className={cn('w-4 h-4 rounded border-2 flex items-center justify-center', t.isCompleted ? 'bg-cyan-600 border-cyan-600' : 'border-[#3a3d4a]')}>
-                      {t.isCompleted && <Check className="w-3 h-3 text-white" />}
+                  <div key={t.id} className={cn('flex items-center gap-3 p-2.5 rounded-lg', t.isCompleted ? 'opacity-50' : 'bg-muted/50')}>
+                    <div className={cn('w-4 h-4 rounded border-2 flex items-center justify-center', t.isCompleted ? 'bg-cyan-600 border-cyan-600' : 'border-border')}>
+                      {t.isCompleted && <Check className="w-3 h-3 text-foreground" />}
                     </div>
-                    <span className={cn('text-sm flex-1', t.isCompleted ? 'line-through text-gray-500' : 'text-gray-300')}>{t.title}</span>
+                    <span className={cn('text-sm flex-1', t.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground/80')}>{t.title}</span>
                   </div>
                 ))}
               </div>
@@ -177,25 +177,25 @@ export function PropertyDetail() {
         {/* Right Sidebar */}
         <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-20 lg:self-start">
           <div className="glass-card rounded-2xl p-5 text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Price</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Price</p>
             <p className="text-3xl font-bold gradient-text-gold mt-1">{formatPrice(property.price, property.priceUnit)}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {property.bedrooms !== null && property.bedrooms !== undefined && (
-              <div className="glass-card rounded-xl p-4 text-center"><Bed className="w-5 h-5 text-cyan-400 mx-auto mb-1" /><p className="text-lg font-bold text-white">{property.bedrooms}</p><p className="text-[10px] text-gray-500 uppercase">Bedrooms</p></div>
+              <div className="glass-card rounded-xl p-4 text-center"><Bed className="w-5 h-5 text-cyan-400 mx-auto mb-1" /><p className="text-lg font-bold text-foreground">{property.bedrooms}</p><p className="text-[10px] text-muted-foreground uppercase">Bedrooms</p></div>
             )}
             {property.bathrooms !== null && property.bathrooms !== undefined && (
-              <div className="glass-card rounded-xl p-4 text-center"><Bath className="w-5 h-5 text-sky-400 mx-auto mb-1" /><p className="text-lg font-bold text-white">{property.bathrooms}</p><p className="text-[10px] text-gray-500 uppercase">Bathrooms</p></div>
+              <div className="glass-card rounded-xl p-4 text-center"><Bath className="w-5 h-5 text-sky-400 mx-auto mb-1" /><p className="text-lg font-bold text-foreground">{property.bathrooms}</p><p className="text-[10px] text-muted-foreground uppercase">Bathrooms</p></div>
             )}
             {property.carpetArea && (
-              <div className="glass-card rounded-xl p-4 text-center"><Maximize className="w-5 h-5 text-amber-400 mx-auto mb-1" /><p className="text-lg font-bold text-white">{property.carpetArea}</p><p className="text-[10px] text-gray-500 uppercase">Sq. Ft.</p></div>
+              <div className="glass-card rounded-xl p-4 text-center"><Maximize className="w-5 h-5 text-amber-400 mx-auto mb-1" /><p className="text-lg font-bold text-foreground">{property.carpetArea}</p><p className="text-[10px] text-muted-foreground uppercase">Sq. Ft.</p></div>
             )}
-            <div className="glass-card rounded-xl p-4 text-center"><Layers className="w-5 h-5 text-violet-400 mx-auto mb-1" /><p className="text-lg font-bold text-white">{property.propertyType}</p><p className="text-[10px] text-gray-500 uppercase">Type</p></div>
+            <div className="glass-card rounded-xl p-4 text-center"><Layers className="w-5 h-5 text-violet-400 mx-auto mb-1" /><p className="text-lg font-bold text-foreground">{property.propertyType}</p><p className="text-[10px] text-muted-foreground uppercase">Type</p></div>
           </div>
 
           <div className="glass-card rounded-2xl p-5">
-            <h3 className="text-sm font-bold text-white mb-3">Property Details</h3>
+            <h3 className="text-sm font-bold text-foreground mb-3">Property Details</h3>
             <div className="space-y-3">
               {property.furnishing && <DetailRow icon={Sofa} label="Furnishing" value={property.furnishing} />}
               {property.facing && <DetailRow icon={Compass} label="Facing" value={property.facing} />}
@@ -208,14 +208,14 @@ export function PropertyDetail() {
 
           {property.reraNumber && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Shield className="w-4 h-4 text-emerald-400" />RERA</h3>
-              <p className="text-sm text-gray-300 font-mono bg-[#1a1d2b] px-3 py-2 rounded-lg border border-[#2a2d3a]">{property.reraNumber}</p>
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Shield className="w-4 h-4 text-emerald-400" />RERA</h3>
+              <p className="text-sm text-foreground/80 font-mono bg-muted px-3 py-2 rounded-lg border border-border">{property.reraNumber}</p>
             </div>
           )}
 
           {(property.developerName || property.projectName) && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Briefcase className="w-4 h-4 text-amber-400" />Developer</h3>
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Briefcase className="w-4 h-4 text-amber-400" />Developer</h3>
               <div className="space-y-3">
                 {property.developerName && <DetailRow icon={Building2} label="Builder" value={property.developerName} />}
                 {property.projectName && <DetailRow icon={Home} label="Project" value={property.projectName} />}
@@ -228,7 +228,7 @@ export function PropertyDetail() {
 
           {property.amenities && property.amenities.length > 0 && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Tag className="w-4 h-4 text-violet-400" />Amenities</h3>
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Tag className="w-4 h-4 text-violet-400" />Amenities</h3>
               <div className="flex flex-wrap gap-2">
                 {property.amenities.map(a => (
                   <span key={a.id} className="px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-medium text-cyan-400 badge-glossy">{a.amenity}</span>
@@ -239,14 +239,14 @@ export function PropertyDetail() {
 
           {property.latitude && property.longitude && (
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-rose-400" />Location</h3>
-              <div className="h-40 rounded-xl overflow-hidden border border-[#2a2d3a]">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-rose-400" />Location</h3>
+              <div className="h-40 rounded-xl overflow-hidden border border-border">
                 <MapPicker
                   center={[property.latitude, property.longitude]}
                   onPositionChange={() => {}}
                 />
               </div>
-              <p className="text-xs text-gray-500 text-center mt-2">{property.latitude.toFixed(4)}, {property.longitude.toFixed(4)}</p>
+              <p className="text-xs text-muted-foreground text-center mt-2">{property.latitude.toFixed(4)}, {property.longitude.toFixed(4)}</p>
             </div>
           )}
         </div>
@@ -257,9 +257,9 @@ export function PropertyDetail() {
 
 function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-500 flex items-center gap-1.5"><Icon className="w-3.5 h-3.5" />{label}</span>
-      <span className="text-sm font-medium text-gray-300">{value}</span>
+    <div className="flex items-start justify-between gap-3 min-w-0">
+      <span className="text-xs text-muted-foreground flex items-center gap-1.5 flex-shrink-0"><Icon className="w-3.5 h-3.5" />{label}</span>
+      <span className="text-sm font-medium text-foreground/80 text-right break-words min-w-0">{value}</span>
     </div>
   );
 }

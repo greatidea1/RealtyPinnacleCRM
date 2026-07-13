@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,15 +24,24 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+/** Root layout with theme provider for light/dark mode. */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en-IN" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
-        {children}
-        <Toaster />
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
-}
+} // end RootLayout

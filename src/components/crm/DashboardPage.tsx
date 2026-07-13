@@ -70,18 +70,18 @@ export function DashboardPage() {
   const totalDeals = Object.values(pipelineData).reduce((sum, p) => sum + p.count, 0);
 
   return (
-    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+      <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{getGreeting()}, {user?.name?.split(' ')[0]}!</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Here&apos;s what&apos;s happening with your real estate business today.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{getGreeting()}, {user?.name?.split(' ')[0]}!</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Here&apos;s what&apos;s happening with your real estate business today.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => openPropertyForm()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-primary text-white text-sm font-medium shadow-lg shadow-cyan-900/30 hover:shadow-cyan-800/40 transition-all">
             <Plus className="w-4 h-4" /> Add Property
           </button>
-          <button onClick={() => openClientForm()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a1d2b] border border-[#2a2d3a] text-gray-300 text-sm font-medium hover:bg-[#252839] transition-all">
+          <button onClick={() => openClientForm()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground/80 text-sm font-medium hover:bg-accent transition-all">
             <Plus className="w-4 h-4" /> Add Client
           </button>
         </div>
@@ -99,8 +99,8 @@ export function DashboardPage() {
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{card.label}</p>
-                <p className="text-3xl font-bold text-white mt-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
+                <p className="text-3xl font-bold text-foreground mt-2">
                   {card.isValue ? formatPrice(stats?.[card.key] || 0, 'Lakhs') : (stats?.[card.key] || 0)}
                 </p>
               </div>
@@ -132,7 +132,7 @@ export function DashboardPage() {
         {/* Deal Pipeline */}
         <div className="lg:col-span-2 glass-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-bold text-white">Deal Pipeline</h2>
+            <h2 className="text-base font-bold text-foreground">Deal Pipeline</h2>
             <button onClick={() => navigate('deals')} className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1">
               View All <ArrowRight className="w-3 h-3" />
             </button>
@@ -144,7 +144,7 @@ export function DashboardPage() {
               return (
                 <div
                   key={stage}
-                  className="pipeline-segment flex items-center justify-center text-[10px] font-bold text-white transition-all cursor-default"
+                  className="pipeline-segment flex items-center justify-center text-[10px] font-bold text-foreground transition-all cursor-default"
                   style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: STAGE_BG_COLORS[stage] }}
                   title={`${stage}: ${pipelineData[stage]?.count || 0} deals`}
                 >
@@ -156,10 +156,10 @@ export function DashboardPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {DEAL_STAGES.map(stage => (
-              <div key={stage} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d2b] border border-[#232738]">
+              <div key={stage} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border">
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: STAGE_BG_COLORS[stage] }} />
-                <span className="text-xs text-gray-400 flex-1 truncate">{stage}</span>
-                <span className="text-xs font-bold text-white">{pipelineData[stage]?.count || 0}</span>
+                <span className="text-xs text-muted-foreground flex-1 truncate">{stage}</span>
+                <span className="text-xs font-bold text-foreground">{pipelineData[stage]?.count || 0}</span>
               </div>
             ))}
           </div>
@@ -168,7 +168,7 @@ export function DashboardPage() {
         {/* Upcoming Tasks */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-bold text-white">Upcoming Tasks</h2>
+            <h2 className="text-base font-bold text-foreground">Upcoming Tasks</h2>
             <button onClick={() => navigate('tasks')} className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1">
               View All <ArrowRight className="w-3 h-3" />
             </button>
@@ -176,28 +176,28 @@ export function DashboardPage() {
 
           <div className="space-y-2">
             {tasks.filter(t => !t.isCompleted).length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">No upcoming tasks</p>
+              <p className="text-sm text-muted-foreground text-center py-6">No upcoming tasks</p>
             ) : (
               tasks.filter(t => !t.isCompleted).map(task => (
                 <div key={task.id} className={cn(
-                  'flex items-start gap-3 p-3 rounded-xl transition-colors hover:bg-[#1a1f30] group',
+                  'flex items-start gap-3 p-3 rounded-xl transition-colors hover:bg-sidebar-accent group',
                   task.isCompleted && 'opacity-50'
                 )}>
                   <button
                     onClick={() => toggleTask(task)}
                     className={cn(
                       'w-5 h-5 rounded-md border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all',
-                      task.isCompleted ? 'bg-cyan-600 border-cyan-600' : 'border-[#3a3d4a] group-hover:border-cyan-500'
+                      task.isCompleted ? 'bg-cyan-600 border-cyan-600' : 'border-border group-hover:border-cyan-500'
                     )}
                   >
-                    {task.isCompleted && <span className="text-white text-xs font-bold">&#10003;</span>}
+                    {task.isCompleted && <span className="text-foreground text-xs font-bold">&#10003;</span>}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className={cn('text-sm font-medium', task.isCompleted ? 'line-through text-gray-500' : 'text-white')}>
+                    <p className={cn('text-sm font-medium', task.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground')}>
                       {task.title}
                     </p>
                     {task.dueDate && (
-                      <p className={cn('text-xs mt-0.5 flex items-center gap-1', isOverdueIST(task.dueDate) ? 'text-rose-400' : 'text-gray-500')}>
+                      <p className={cn('text-xs mt-0.5 flex items-center gap-1', isOverdueIST(task.dueDate) ? 'text-rose-400' : 'text-muted-foreground')}>
                         <Clock className="w-3 h-3" /> {formatDate(task.dueDate, { day: 'numeric', month: 'short' })}
                       </p>
                     )}
@@ -219,10 +219,10 @@ export function DashboardPage() {
 
       {/* Activity Feed */}
       <div className="glass-card rounded-2xl p-6">
-        <h2 className="text-base font-bold text-white mb-5">Recent Activity</h2>
+        <h2 className="text-base font-bold text-foreground mb-5">Recent Activity</h2>
         <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
           {activities.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-6">No recent activity</p>
+            <p className="text-sm text-muted-foreground text-center py-6">No recent activity</p>
           ) : (
             activities.slice(0, 15).map(act => (
               <div key={act.id} className="flex items-start gap-3 group">
@@ -231,18 +231,18 @@ export function DashboardPage() {
                     {getInitials(act.user?.name || 'Unknown')}
                   </div>
                   <div className={cn(
-                    'absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] border-2 border-[#181b24]',
+                    'absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] border-2 border-card',
                     act.action === 'created' ? 'bg-cyan-500' : act.action === 'deleted' ? 'bg-rose-500' : 'bg-amber-500'
                   )}>
                     {activityIcons[act.action] || '\u2022'}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-300">
-                    <span className="font-semibold text-white">{act.user?.name || 'Unknown'}</span>{' '}
+                  <p className="text-sm text-foreground/80">
+                    <span className="font-semibold text-foreground">{act.user?.name || 'Unknown'}</span>{' '}
                     {act.description}
                   </p>
-                  <p className="text-[11px] text-gray-600 mt-0.5">{timeAgo(act.createdAt)}</p>
+                  <p className="text-[11px] text-muted-foreground/70 mt-0.5">{timeAgo(act.createdAt)}</p>
                 </div>
               </div>
             ))

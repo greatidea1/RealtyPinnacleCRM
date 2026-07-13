@@ -46,22 +46,22 @@ export function DealsPage() {
 
   const filteredDeals = stageFilter === 'all' ? deals : deals.filter(d => d.stage === stageFilter);
 
-  if (loading) return <div className="p-6 space-y-4"><div className="h-10 w-64 shimmer rounded-xl" />{DEAL_STAGES.map((_, i) => <div key={i} className="h-40 shimmer rounded-xl inline-block w-72 mr-4" />)}</div>;
+  if (loading) return <div className="p-4 sm:p-6 space-y-4 overflow-x-auto"><div className="h-10 w-64 max-w-full shimmer rounded-xl" />{DEAL_STAGES.map((_, i) => <div key={i} className="h-40 shimmer rounded-xl inline-block w-64 sm:w-72 mr-4" />)}</div>;
 
   return (
-    <div className="p-6 space-y-5 max-w-[1600px] mx-auto h-full">
+    <div className="p-4 sm:p-6 space-y-5 max-w-[1600px] mx-auto h-full">
       <div className="flex flex-wrap items-center gap-3 justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Select value={stageFilter} onValueChange={setStageFilter}>
-            <SelectTrigger className="w-44 border-[#2a2d3a] bg-[#1a1d2b] text-gray-300"><SelectValue placeholder="All Stages" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44 border-border bg-muted text-foreground/80"><SelectValue placeholder="All Stages" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Stages</SelectItem>
               {DEAL_STAGES.map(s => <SelectItem key={s} value={s}>{s} ({pipelineStats[s]?.count || 0})</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="flex bg-[#1a1d2b] rounded-lg p-0.5 border border-[#2a2d3a]">
-            <button onClick={() => setViewMode('kanban')} className={cn('p-1.5 rounded-md transition-all', viewMode === 'kanban' ? 'bg-[#252839] shadow-sm text-cyan-400' : 'text-gray-500')}><LayoutGrid className="w-4 h-4" /></button>
-            <button onClick={() => setViewMode('table')} className={cn('p-1.5 rounded-md transition-all', viewMode === 'table' ? 'bg-[#252839] shadow-sm text-cyan-400' : 'text-gray-500')}><List className="w-4 h-4" /></button>
+          <div className="flex bg-muted rounded-lg p-0.5 border border-border">
+            <button onClick={() => setViewMode('kanban')} className={cn('p-1.5 rounded-md transition-all', viewMode === 'kanban' ? 'bg-accent shadow-sm text-cyan-400' : 'text-muted-foreground')}><LayoutGrid className="w-4 h-4" /></button>
+            <button onClick={() => setViewMode('table')} className={cn('p-1.5 rounded-md transition-all', viewMode === 'table' ? 'bg-accent shadow-sm text-cyan-400' : 'text-muted-foreground')}><List className="w-4 h-4" /></button>
           </div>
         </div>
         <button onClick={() => openDealForm()} className="gradient-primary shadow-lg shadow-cyan-900/30 gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-white flex items-center"><Plus className="w-4 h-4" /> Add Deal</button>
@@ -73,11 +73,11 @@ export function DealsPage() {
             const stageDeals = filteredDeals.filter(d => d.stage === stage);
             const stageValue = stageDeals.reduce((sum, d) => sum + (d.dealValue || 0), 0);
             return (
-              <div key={stage} className="flex-shrink-0 w-72">
+              <div key={stage} className="flex-shrink-0 w-[min(100%,18rem)] sm:w-72">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STAGE_BG_COLORS[stage] }} />
-                  <h3 className="text-sm font-bold text-gray-300 flex-1">{stage}</h3>
-                  <span className="text-xs font-semibold text-gray-500">{stageDeals.length}</span>
+                  <h3 className="text-sm font-bold text-foreground/80 flex-1">{stage}</h3>
+                  <span className="text-xs font-semibold text-muted-foreground">{stageDeals.length}</span>
                 </div>
                 {stageValue > 0 && <p className="text-xs gradient-text-gold font-semibold mb-2">&#8377;{(stageValue / 100).toFixed(1)} Cr</p>}
                 <div className="space-y-3">
@@ -87,22 +87,22 @@ export function DealsPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white', getAvatarColor(deal.client?.name || ''))}>{getInitials(deal.client?.name || '?')}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white truncate">{deal.client?.name || '\u2014'}</p>
-                          <p className="text-[10px] text-gray-500 truncate">{deal.property?.title}</p>
+                          <p className="text-xs font-semibold text-foreground truncate">{deal.client?.name || '\u2014'}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{deal.property?.title}</p>
                         </div>
                       </div>
                       <p className="text-sm font-bold gradient-text-gold mb-1">{deal.dealValue ? formatPriceShort(deal.dealValue, 'Lakhs') : '\u2014'}</p>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500"><MapPin className="w-3 h-3" /><span className="truncate">{deal.property?.locality}{deal.property?.city ? `, ${deal.property.city}` : ''}</span></div>
-                      {deal.expectedCloseDate && <div className="flex items-center gap-1 text-[10px] text-gray-500 mt-1"><Calendar className="w-3 h-3" />{formatDate(deal.expectedCloseDate, { day: 'numeric', month: 'short' })}</div>}
-                      <div className="mt-3 pt-2 border-t border-[#2a2d3a]">
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><MapPin className="w-3 h-3" /><span className="truncate">{deal.property?.locality}{deal.property?.city ? `, ${deal.property.city}` : ''}</span></div>
+                      {deal.expectedCloseDate && <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1"><Calendar className="w-3 h-3" />{formatDate(deal.expectedCloseDate, { day: 'numeric', month: 'short' })}</div>}
+                      <div className="mt-3 pt-2 border-t border-border">
                         <Select value={deal.stage} onValueChange={v => handleStageChange(deal.id, v)}>
-                          <SelectTrigger className="h-7 text-[10px] border-[#2a2d3a] bg-[#1a1d2b] text-gray-300"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-7 text-[10px] border-border bg-muted text-foreground/80"><SelectValue /></SelectTrigger>
                           <SelectContent>{DEAL_STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
                     </motion.div>
                   ))}
-                  {stageDeals.length === 0 && <div className="rounded-xl border-2 border-dashed border-[#2a2d3a] p-6 text-center text-xs text-gray-600">No deals</div>}
+                  {stageDeals.length === 0 && <div className="rounded-xl border-2 border-dashed border-border p-6 text-center text-xs text-muted-foreground/70">No deals</div>}
                 </div>
               </div>
             );
@@ -115,34 +115,34 @@ export function DealsPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#232738]">
-                  <th className="text-left text-xs font-semibold text-gray-500 px-4 py-3">Stage</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-4 py-3">Property</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-4 py-3">Client</th>
-                  <th className="text-right text-xs font-semibold text-gray-500 px-4 py-3">Value</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-4 py-3">Close Date</th>
-                  {user?.role === 'ADMIN' && <th className="text-left text-xs font-semibold text-gray-500 px-4 py-3">Agent</th>}
-                  <th className="text-right text-xs font-semibold text-gray-500 px-4 py-3">Actions</th>
+                <tr className="border-b border-border">
+                  <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Stage</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Property</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Client</th>
+                  <th className="text-right text-xs font-semibold text-muted-foreground px-4 py-3">Value</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Close Date</th>
+                  {user?.role === 'ADMIN' && <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Agent</th>}
+                  <th className="text-right text-xs font-semibold text-muted-foreground px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredDeals.map(d => (
-                  <tr key={d.id} onClick={() => navigate('deal-detail', d.id)} className="table-row-hover cursor-pointer border-b border-[#1a1d2b] last:border-0">
+                  <tr key={d.id} onClick={() => navigate('deal-detail', d.id)} className="table-row-hover cursor-pointer border-b border-muted last:border-0">
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <Select value={d.stage} onValueChange={v => handleStageChange(d.id, v)}>
                         <SelectTrigger className={cn('h-7 w-32 text-[10px] border', STAGE_COLORS[d.stage])}><SelectValue /></SelectTrigger>
                         <SelectContent>{DEAL_STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-3"><p className="text-sm font-medium text-white truncate max-w-[180px]">{d.property?.title || '\u2014'}</p><p className="text-[10px] text-gray-500">{d.property?.locality}, {d.property?.city}</p></td>
-                    <td className="px-4 py-3"><div className="flex items-center gap-2"><div className={cn('w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white', getAvatarColor(d.client?.name || ''))}>{getInitials(d.client?.name || '?')}</div><span className="text-sm text-gray-300">{d.client?.name || '\u2014'}</span></div></td>
+                    <td className="px-4 py-3"><p className="text-sm font-medium text-foreground truncate max-w-[180px]">{d.property?.title || '\u2014'}</p><p className="text-[10px] text-muted-foreground">{d.property?.locality}, {d.property?.city}</p></td>
+                    <td className="px-4 py-3"><div className="flex items-center gap-2"><div className={cn('w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white', getAvatarColor(d.client?.name || ''))}>{getInitials(d.client?.name || '?')}</div><span className="text-sm text-foreground/80">{d.client?.name || '\u2014'}</span></div></td>
                     <td className="px-4 py-3 text-right"><span className="text-sm font-bold gradient-text-gold">{d.dealValue ? formatPriceShort(d.dealValue, 'Lakhs') : '\u2014'}</span></td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{d.expectedCloseDate ? formatDate(d.expectedCloseDate, { day: 'numeric', month: 'short' }) : '\u2014'}</td>
-                    {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-gray-500">{d.assignedTo?.name || '\u2014'}</td>}
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{d.expectedCloseDate ? formatDate(d.expectedCloseDate, { day: 'numeric', month: 'short' }) : '\u2014'}</td>
+                    {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-muted-foreground">{d.assignedTo?.name || '\u2014'}</td>}
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => navigate('deal-detail', d.id)} className="p-1.5 rounded-lg hover:bg-[#1a1f30] text-gray-500 hover:text-cyan-400"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => openDeleteDialog('deal', d.id, `${d.property?.title} - ${d.client?.name}`)} className="p-1.5 rounded-lg hover:bg-rose-500/10 text-gray-500 hover:text-rose-400"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => navigate('deal-detail', d.id)} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-muted-foreground hover:text-cyan-400"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => openDeleteDialog('deal', d.id, `${d.property?.title} - ${d.client?.name}`)} className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-400"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -169,14 +169,14 @@ export function DealDetail() {
   }, [selectedId, user]);
 
   if (loading) return <div className="p-6"><div className="h-96 shimmer rounded-2xl" /></div>;
-  if (!deal) return <div className="p-8 text-center text-gray-500">Deal not found</div>;
+  if (!deal) return <div className="p-8 text-center text-muted-foreground">Deal not found</div>;
 
   const isOwner = deal.assignedToId === user?.id || user?.role === 'ADMIN';
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <button onClick={goBack} className="flex items-center gap-2 text-sm text-gray-500 hover:text-cyan-400"><ArrowLeft className="w-4 h-4" /> Back to Deals</button>
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <button onClick={goBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-cyan-400 self-start"><ArrowLeft className="w-4 h-4" /> Back to Deals</button>
         {isOwner && (
           <div className="flex gap-2">
             <button onClick={() => openDealForm(deal)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"><Pencil className="w-3.5 h-3.5" /> Edit</button>
@@ -184,36 +184,36 @@ export function DealDetail() {
           </div>
         )}
       </div>
-      <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-center gap-4 mb-6">
+      <div className="glass-card rounded-2xl p-4 sm:p-6">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6">
           <span className={cn('text-sm px-3 py-1 rounded-full border font-medium badge-glossy', STAGE_COLORS[deal.stage])}>{deal.stage}</span>
-          <h1 className="text-xl font-bold text-white">Deal Details</h1>
+          <h1 className="text-xl font-bold text-foreground">Deal Details</h1>
         </div>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-xs text-gray-500 uppercase mb-2 flex items-center gap-1.5"><Handshake className="w-3.5 h-3.5" />Property</h3>
+            <h3 className="text-xs text-muted-foreground uppercase mb-2 flex items-center gap-1.5"><Handshake className="w-3.5 h-3.5" />Property</h3>
             <button onClick={() => navigate('property-detail', deal.propertyId)} className="text-left">
               <p className="text-sm font-semibold text-cyan-400 hover:underline">{deal.property?.title}</p>
-              <p className="text-xs text-gray-500">{deal.property?.locality}, {deal.property?.city}</p>
+              <p className="text-xs text-muted-foreground">{deal.property?.locality}, {deal.property?.city}</p>
             </button>
           </div>
           <div>
-            <h3 className="text-xs text-gray-500 uppercase mb-2 flex items-center gap-1.5"><User className="w-3.5 h-3.5" />Client</h3>
+            <h3 className="text-xs text-muted-foreground uppercase mb-2 flex items-center gap-1.5"><User className="w-3.5 h-3.5" />Client</h3>
             <button onClick={() => navigate('client-detail', deal.clientId)} className="text-left">
               <p className="text-sm font-semibold text-cyan-400 hover:underline">{deal.client?.name}</p>
-              <p className="text-xs text-gray-500">{deal.client?.phone}</p>
+              <p className="text-xs text-muted-foreground">{deal.client?.phone}</p>
             </button>
           </div>
           <div>
-            <h3 className="text-xs text-gray-500 uppercase mb-2">Deal Value</h3>
+            <h3 className="text-xs text-muted-foreground uppercase mb-2">Deal Value</h3>
             <p className="text-2xl font-bold gradient-text-gold">{deal.dealValue ? formatPriceShort(deal.dealValue, 'Lakhs') : '\u2014'}</p>
           </div>
           <div>
-            <h3 className="text-xs text-gray-500 uppercase mb-2 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Expected Close</h3>
-            <p className="text-sm text-gray-300">{deal.expectedCloseDate ? formatDate(deal.expectedCloseDate, { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not set'}</p>
+            <h3 className="text-xs text-muted-foreground uppercase mb-2 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Expected Close</h3>
+            <p className="text-sm text-foreground/80">{deal.expectedCloseDate ? formatDate(deal.expectedCloseDate, { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not set'}</p>
           </div>
         </div>
-        {deal.notes && <div className="mt-6 pt-4 border-t border-[#2a2d3a]"><h3 className="text-xs text-gray-500 uppercase mb-2">Notes</h3><p className="text-sm text-gray-400">{deal.notes}</p></div>}
+        {deal.notes && <div className="mt-6 pt-4 border-t border-border"><h3 className="text-xs text-muted-foreground uppercase mb-2">Notes</h3><p className="text-sm text-muted-foreground">{deal.notes}</p></div>}
       </div>
     </div>
   );
@@ -261,18 +261,18 @@ export function DealForm() {
 
   return (
     <Dialog open={showDealForm} onOpenChange={open => { if (!open) closeDealForm(); }}>
-      <DialogContent className="max-w-lg bg-[#1e2130] border-[#2a2d3a] text-white">
-        <DialogHeader><DialogTitle className="text-white">{editingDeal ? 'Edit Deal' : 'Add New Deal'}</DialogTitle></DialogHeader>
+      <DialogContent className="sm:max-w-xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden bg-popover border-border text-foreground">
+        <DialogHeader><DialogTitle className="text-foreground pr-8">{editingDeal ? 'Edit Deal' : 'Add New Deal'}</DialogTitle></DialogHeader>
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1 block">Select Property *</Label>
-              <Input value={propSearch} onChange={e => setPropSearch(e.target.value)} placeholder="Search property..." className="border-[#2a2d3a] bg-[#1a1d2b] text-white mb-2" />
+              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Select Property *</Label>
+              <Input value={propSearch} onChange={e => setPropSearch(e.target.value)} placeholder="Search property..." className="border-border bg-muted text-foreground mb-2" />
               <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
                 {filteredProps.map(p => (
                   <button key={p.id} onClick={() => setForm(f => ({ ...f, propertyId: p.id }))}
-                    className={cn('w-full text-left p-2.5 rounded-lg text-sm transition-colors', form.propertyId === p.id ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'hover:bg-[#1a1f30] border border-transparent text-gray-300')}>
-                    <span className="font-medium">{p.title}</span><span className="text-gray-500 ml-2 text-xs">{p.locality}, {p.city}</span>
+                    className={cn('w-full text-left p-2.5 rounded-lg text-sm transition-colors min-w-0', form.propertyId === p.id ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'hover:bg-sidebar-accent border border-transparent text-foreground/80')}>
+                    <span className="font-medium truncate block">{p.title}</span><span className="text-muted-foreground text-xs truncate block">{p.locality}, {p.city}</span>
                   </button>
                 ))}
               </div>
@@ -283,48 +283,48 @@ export function DealForm() {
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1 block">Select Client *</Label>
-              <Input value={clientSearch} onChange={e => setClientSearch(e.target.value)} placeholder="Search client..." className="border-[#2a2d3a] bg-[#1a1d2b] text-white mb-2" />
+              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Select Client *</Label>
+              <Input value={clientSearch} onChange={e => setClientSearch(e.target.value)} placeholder="Search client..." className="border-border bg-muted text-foreground mb-2" />
               <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
                 {filteredClients.map(c => (
                   <button key={c.id} onClick={() => setForm(f => ({ ...f, clientId: c.id }))}
-                    className={cn('w-full text-left p-2.5 rounded-lg text-sm transition-colors', form.clientId === c.id ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'hover:bg-[#1a1f30] border border-transparent text-gray-300')}>
-                    <span className="font-medium">{c.name}</span><span className="text-gray-500 ml-2 text-xs">{c.phone}</span>
+                    className={cn('w-full text-left p-2.5 rounded-lg text-sm transition-colors min-w-0', form.clientId === c.id ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'hover:bg-sidebar-accent border border-transparent text-foreground/80')}>
+                    <span className="font-medium truncate block">{c.name}</span><span className="text-muted-foreground text-xs truncate block">{c.phone}</span>
                   </button>
                 ))}
               </div>
             </div>
             <div className="flex justify-between">
-              <button onClick={() => setStep(0)} className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a]">Back</button>
+              <button onClick={() => setStep(0)} className="px-4 py-2 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border">Back</button>
               <button onClick={() => setStep(2)} disabled={!form.clientId} className="gradient-primary shadow-md shadow-cyan-900/30 px-4 py-2 rounded-xl text-sm font-medium text-white">Next</button>
             </div>
           </div>
         )}
         {step === 2 && (
           <div className="space-y-4">
-            {selectedProp && <p className="text-xs text-gray-500 bg-[#1a1d2b] p-2 rounded-lg border border-[#2a2d3a]">Property: <strong className="text-white">{selectedProp.title}</strong></p>}
-            {selectedClient && <p className="text-xs text-gray-500 bg-[#1a1d2b] p-2 rounded-lg border border-[#2a2d3a]">Client: <strong className="text-white">{selectedClient.name}</strong></p>}
+            {selectedProp && <p className="text-xs text-muted-foreground bg-muted p-2 rounded-lg border border-border">Property: <strong className="text-foreground">{selectedProp.title}</strong></p>}
+            {selectedClient && <p className="text-xs text-muted-foreground bg-muted p-2 rounded-lg border border-border">Client: <strong className="text-foreground">{selectedClient.name}</strong></p>}
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1 block">Stage *</Label>
+              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Stage *</Label>
               <Select value={form.stage} onValueChange={v => setForm(f => ({ ...f, stage: v }))}>
-                <SelectTrigger className="border-[#2a2d3a] bg-[#1a1d2b] text-white"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="border-border bg-muted text-foreground"><SelectValue /></SelectTrigger>
                 <SelectContent>{DEAL_STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1 block">Deal Value (Lakhs) *</Label>
-              <Input type="number" value={form.dealValue} onChange={e => setForm(f => ({ ...f, dealValue: e.target.value }))} placeholder="85" className="border-[#2a2d3a] bg-[#1a1d2b] text-white" />
+              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Deal Value (Lakhs) *</Label>
+              <Input type="number" value={form.dealValue} onChange={e => setForm(f => ({ ...f, dealValue: e.target.value }))} placeholder="85" className="border-border bg-muted text-foreground" />
             </div>
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1 block">Expected Close Date</Label>
-              <Input type="date" value={form.expectedCloseDate} onChange={e => setForm(f => ({ ...f, expectedCloseDate: e.target.value }))} className="border-[#2a2d3a] bg-[#1a1d2b] text-white" />
+              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Expected Close Date</Label>
+              <Input type="date" value={form.expectedCloseDate} onChange={e => setForm(f => ({ ...f, expectedCloseDate: e.target.value }))} className="border-border bg-muted text-foreground" />
             </div>
             <div>
-              <Label className="text-xs font-medium text-gray-400 mb-1 block">Notes</Label>
-              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="border-[#2a2d3a] bg-[#1a1d2b] text-white" />
+              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Notes</Label>
+              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="border-border bg-muted text-foreground" />
             </div>
             <div className="flex justify-between">
-              <button onClick={() => setStep(1)} className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 bg-[#1a1d2b] border border-[#2a2d3a]">Back</button>
+              <button onClick={() => setStep(1)} className="px-4 py-2 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border">Back</button>
               <button onClick={handleSubmit} disabled={loading || !form.dealValue} className="gradient-primary shadow-md shadow-cyan-900/30 px-4 py-2 rounded-xl text-sm font-medium text-white">{loading ? 'Saving...' : editingDeal ? 'Update Deal' : 'Create Deal'}</button>
             </div>
           </div>

@@ -177,19 +177,19 @@ export function PropertyForm() {
   };
 
   const Field = ({ label, name, type = 'text', placeholder, colSpan = 1 }: { label: string; name: keyof FormData; type?: string; placeholder?: string; colSpan?: number }) => (
-    <div className={colSpan === 2 ? 'col-span-2' : ''}>
-      <Label className="text-xs font-medium text-gray-400 mb-1 block">{label}</Label>
+    <div className={colSpan === 2 ? 'col-span-1 sm:col-span-2' : 'min-w-0'}>
+      <Label className="text-xs font-medium text-muted-foreground mb-1 block">{label}</Label>
       <Input type={type} value={form[name] as string} onChange={e => set(name, e.target.value)} placeholder={placeholder}
-        className={cn('bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50', errors[name] && 'border-rose-500')} />
+        className={cn('bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50', errors[name] && 'border-rose-500')} />
       {errors[name] && <p className="text-[10px] text-rose-400 mt-0.5">{errors[name]}</p>}
     </div>
   );
 
   const SelectField = ({ label, name, options, placeholder }: { label: string; name: keyof FormData; options: string[]; placeholder: string }) => (
     <div>
-      <Label className="text-xs font-medium text-gray-400 mb-1 block">{label}</Label>
+      <Label className="text-xs font-medium text-muted-foreground mb-1 block">{label}</Label>
       <Select value={form[name] as string} onValueChange={v => set(name, v)}>
-        <SelectTrigger className="border-[#2a2d3a] bg-[#1a1d2b] text-white"><SelectValue placeholder={placeholder} /></SelectTrigger>
+        <SelectTrigger className="border-border bg-muted text-foreground"><SelectValue placeholder={placeholder} /></SelectTrigger>
         <SelectContent>
           {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
         </SelectContent>
@@ -199,24 +199,24 @@ export function PropertyForm() {
 
   return (
     <Dialog open={showPropertyForm} onOpenChange={open => { if (!open) closePropertyForm(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 bg-[#1e2130] border-[#2a2d3a]">
+      <DialogContent className="sm:max-w-3xl w-full max-h-[90vh] overflow-hidden p-0 bg-popover border-border">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-lg font-bold text-white">
+          <DialogTitle className="text-lg font-bold text-foreground pr-8">
             {editingProperty ? 'Edit Property' : 'Add New Property'}
           </DialogTitle>
         </DialogHeader>
 
         {/* Step Tracker */}
-        <div className="px-6 pt-2">
-          <div className="flex items-center gap-1">
+        <div className="px-6 pt-2 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-1 min-w-0">
             {STEPS.map((s, i) => (
-              <div key={s} className="flex-1">
-                <div className="flex items-center gap-1.5">
-                  <div className={cn('w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all',
-                    i < step ? 'step-completed text-white' : i === step ? 'step-active text-cyan-400' : 'step-pending text-gray-500')}>
+              <div key={s} className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className={cn('w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all flex-shrink-0',
+                    i < step ? 'step-completed text-foreground' : i === step ? 'step-active text-cyan-400' : 'step-pending text-muted-foreground')}>
                     {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
                   </div>
-                  <span className={cn('text-[10px] font-medium hidden lg:block', i === step ? 'text-cyan-400' : 'text-gray-500')}>{s}</span>
+                  <span className={cn('text-[10px] font-medium hidden lg:block truncate', i === step ? 'text-cyan-400' : 'text-muted-foreground')}>{s}</span>
                 </div>
               </div>
             ))}
@@ -224,42 +224,42 @@ export function PropertyForm() {
         </div>
 
         {/* Form Steps */}
-        <div className="p-6 pt-4 space-y-4 max-h-[55vh] overflow-y-auto custom-scrollbar">
+        <div className="p-6 pt-4 space-y-4 max-h-[55vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
           {step === 0 && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1 flex items-center gap-1 block">
+                <Label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1 block">
                   <Hash className="w-3 h-3" /> Property ID
                 </Label>
-                <Input value={form.propertyId} onChange={e => set('propertyId', e.target.value)} placeholder="e.g. PROP-001"
-                  className="bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50" />
+                <Input value={form.propertyId} onChange={e => set('propertyId', e.target.value)} placeholder="Property ID"
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50" />
               </div>
-              <Field label="Property Title *" name="title" placeholder="e.g. Skyline Heights 3BHK" colSpan={1} />
+              <Field label="Property Title *" name="title" placeholder="Property title" colSpan={1} />
               <SelectField label="Property Type" name="propertyType" options={PROPERTY_TYPES} placeholder="Select type" />
-              <div className="col-span-2 grid grid-cols-2 gap-4">
-                <Field label="Bedrooms" name="bedrooms" type="number" placeholder="e.g. 3" />
-                <Field label="Bathrooms" name="bathrooms" type="number" placeholder="e.g. 2" />
+              <div className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Bedrooms" name="bedrooms" type="number" placeholder="Bedrooms" />
+                <Field label="Bathrooms" name="bathrooms" type="number" placeholder="Bathrooms" />
               </div>
-              <Field label="Carpet Area (sq.ft)" name="carpetArea" type="number" placeholder="e.g. 1450" />
+              <Field label="Carpet Area (sq.ft)" name="carpetArea" type="number" placeholder="Area" />
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1 block">Price *</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1 block">Price *</Label>
                 <div className="flex gap-2">
-                  <Input type="number" value={form.price} onChange={e => set('price', e.target.value)} placeholder="85"
-                    className={cn('flex-1 bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50', errors.price && 'border-rose-500')} />
+                  <Input type="number" value={form.price} onChange={e => set('price', e.target.value)} placeholder="Price"
+                    className={cn('flex-1 bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50', errors.price && 'border-rose-500')} />
                   <Select value={form.priceUnit} onValueChange={v => set('priceUnit', v)}>
-                    <SelectTrigger className="w-28 border-[#2a2d3a] bg-[#1a1d2b] text-white"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-28 border-border bg-muted text-foreground"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="Lakhs">Lakhs</SelectItem><SelectItem value="Crore">Crore</SelectItem></SelectContent>
                   </Select>
                 </div>
                 {errors.price && <p className="text-[10px] text-rose-400 mt-0.5">{errors.price}</p>}
               </div>
-              <Field label="Floor Number" name="floorNumber" type="number" placeholder="e.g. 7" />
-              <Field label="Total Floors" name="totalFloors" type="number" placeholder="e.g. 22" />
+              <Field label="Floor Number" name="floorNumber" type="number" placeholder="Floor" />
+              <Field label="Total Floors" name="totalFloors" type="number" placeholder="Total floors" />
             </div>
           )}
 
           {step === 1 && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SelectField label="Age of Property" name="ageOfProperty" options={AGE_OPTIONS} placeholder="Select age" />
               <SelectField label="Facing Direction" name="facing" options={FACING_OPTIONS} placeholder="Select facing" />
               <SelectField label="Furnishing" name="furnishing" options={FURNISH_OPTIONS} placeholder="Select" />
@@ -267,22 +267,22 @@ export function PropertyForm() {
           )}
 
           {step === 2 && (
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Locality *" name="locality" placeholder="e.g. Hinjewadi Phase 1" />
-              <Field label="City *" name="city" placeholder="e.g. Pune" />
-              <Field label="Pincode" name="pincode" placeholder="411057" />
-              <Field label="Landmark" name="landmark" placeholder="Near IT Park" />
-              <div className="col-span-2">
-                <Label className="text-xs font-medium text-gray-400 mb-1 block">Full Address *</Label>
-                <Textarea value={form.fullAddress} onChange={e => set('fullAddress', e.target.value)} placeholder="Complete address" rows={3}
-                  className={cn('bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50', errors.fullAddress && 'border-rose-500')} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Locality *" name="locality" placeholder="Locality" />
+              <Field label="City *" name="city" placeholder="City" />
+              <Field label="Pincode" name="pincode" placeholder="Pincode" />
+              <Field label="Landmark" name="landmark" placeholder="Landmark" />
+              <div className="col-span-1 sm:col-span-2">
+                <Label className="text-xs font-medium text-muted-foreground mb-1 block">Full Address *</Label>
+                <Textarea value={form.fullAddress} onChange={e => set('fullAddress', e.target.value)} placeholder="Full address" rows={3}
+                  className={cn('bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50', errors.fullAddress && 'border-rose-500')} />
                 {errors.fullAddress && <p className="text-[10px] text-rose-400 mt-0.5">{errors.fullAddress}</p>}
               </div>
-              <div className="col-span-2">
-                <Label className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1 block">
+              <div className="col-span-1 sm:col-span-2">
+                <Label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1 block">
                   <MapPin className="w-3 h-3" /> Mark Location on Map (click to place pin)
                 </Label>
-                <div className="rounded-xl overflow-hidden border border-[#2a2d3a] h-52">
+                <div className="rounded-xl overflow-hidden border border-border h-52">
                   <MapPicker
                     center={[form.latitude ? parseFloat(form.latitude) : 18.5204, form.longitude ? parseFloat(form.longitude) : 73.8567]}
                     onPositionChange={(lat, lng) => {
@@ -291,58 +291,58 @@ export function PropertyForm() {
                   />
                 </div>
                 {(form.latitude || form.longitude) && (
-                  <p className="text-[10px] text-gray-500 mt-1">{form.latitude}, {form.longitude}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{form.latitude}, {form.longitude}</p>
                 )}
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="RERA Number" name="reraNumber" placeholder="A52100030497" />
-              <Field label="Developer / Builder" name="developerName" placeholder="Skyline Builders" />
-              <Field label="Project / Society" name="projectName" placeholder="Skyline Heights" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="RERA Number" name="reraNumber" placeholder="RERA number" />
+              <Field label="Developer / Builder" name="developerName" placeholder="Developer name" />
+              <Field label="Project / Society" name="projectName" placeholder="Project name" />
               <Field label="Project RERA No." name="projectReraNumber" placeholder="" />
-              <Field label="Contact Person" name="contactPerson" placeholder="Vikram Desai" />
-              <Field label="Contact Phone" name="contactPhone" placeholder="+91 99887 76655" />
-              <Field label="Contact Email" name="contactEmail" type="email" placeholder="vikram@builder.com" />
-              <Field label="Designation" name="contactDesignation" placeholder="Sales Manager" />
+              <Field label="Contact Person" name="contactPerson" placeholder="Contact person" />
+              <Field label="Contact Phone" name="contactPhone" placeholder="Phone" />
+              <Field label="Contact Email" name="contactEmail" type="email" placeholder="Email" />
+              <Field label="Designation" name="contactDesignation" placeholder="Designation" />
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1 block">Description</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1 block">Description</Label>
                 <Textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the property..." rows={3}
-                  className="bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50" />
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50" />
               </div>
 
               {/* YouTube Video Link */}
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1 flex items-center gap-1.5 block">
+                <Label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5 block">
                   <Youtube className="w-3.5 h-3.5 text-rose-400" /> YouTube Video Link
                 </Label>
                 <div className="relative">
-                  <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input value={form.youtubeUrl} onChange={e => set('youtubeUrl', e.target.value)} placeholder="https://youtube.com/watch?v=..."
-                    className="pl-9 bg-[#1a1d2b] border-[#2a2d3a] text-white placeholder:text-gray-600 focus:border-cyan-500/50" />
+                    className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50" />
                 </div>
               </div>
 
               {/* Photo Upload */}
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1.5 block">
+                <Label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5 block">
                   <ImageIcon className="w-3.5 h-3.5" /> Property Photos
                 </Label>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {existingPhotos.map(p => (
-                    <div key={p.id} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#2a2d3a] group">
+                    <div key={p.id} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border group">
                       <img src={p.url} alt="" className="w-full h-full object-cover" />
                     </div>
                   ))}
                   {photos.map((p, i) => (
-                    <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#2a2d3a] group">
+                    <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border group">
                       <img src={p} alt="" className="w-full h-full object-cover" />
                       <button onClick={() => removePhoto(i)} type="button"
                         className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-rose-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -353,21 +353,21 @@ export function PropertyForm() {
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
                 <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-3 w-full rounded-xl border-2 border-dashed border-[#2a2d3a] text-gray-500 hover:text-cyan-400 hover:border-cyan-500/30 transition-colors text-sm">
+                  className="flex items-center gap-2 px-4 py-3 w-full rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-cyan-400 hover:border-cyan-500/30 transition-colors text-sm">
                   <Upload className="w-4 h-4" /> Upload Photos
                 </button>
               </div>
 
               {/* Amenities */}
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-2 block">Amenities</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-2 block">Amenities</Label>
                 <div className="flex flex-wrap gap-2">
                   {ALL_AMENITIES.map(a => (
                     <button key={a} type="button" onClick={() => set('amenities', form.amenities.includes(a) ? form.amenities.filter(x => x !== a) : [...form.amenities, a])}
                       className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
                         form.amenities.includes(a)
                           ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30 shadow-sm'
-                          : 'bg-[#1a1d2b] border-[#2a2d3a] text-gray-500 hover:bg-[#252839] hover:text-gray-300'
+                          : 'bg-muted border-border text-muted-foreground hover:bg-accent hover:text-foreground/80'
                       )}>
                       {a}
                     </button>
@@ -378,17 +378,17 @@ export function PropertyForm() {
           )}
 
           {step === 5 && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs font-medium text-gray-400 mb-1 block">Listed Date</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1 block">Listed Date</Label>
                 <Input type="date" value={form.listedDate} onChange={e => set('listedDate', e.target.value)}
-                  className="bg-[#1a1d2b] border-[#2a2d3a] text-white focus:border-cyan-500/50" />
+                  className="bg-muted border-border text-foreground focus:border-cyan-500/50" />
               </div>
               {(user?.role === 'ADMIN') ? (
                 <div>
-                  <Label className="text-xs font-medium text-gray-400 mb-1 block">Assigned Agent</Label>
+                  <Label className="text-xs font-medium text-muted-foreground mb-1 block">Assigned Agent</Label>
                   <Select value={form.assignedToId} onValueChange={v => set('assignedToId', v)}>
-                    <SelectTrigger className="border-[#2a2d3a] bg-[#1a1d2b] text-white"><SelectValue placeholder="Select agent" /></SelectTrigger>
+                    <SelectTrigger className="border-border bg-muted text-foreground"><SelectValue placeholder="Select agent" /></SelectTrigger>
                     <SelectContent>
                       {agents.map(a => <SelectItem key={a.id} value={a.id}>{a.name} ({a.role})</SelectItem>)}
                     </SelectContent>
@@ -396,8 +396,8 @@ export function PropertyForm() {
                 </div>
               ) : (
                 <div>
-                  <Label className="text-xs font-medium text-gray-400 mb-1 block">Assigned Agent</Label>
-                  <Input value={user?.name || ''} disabled className="bg-[#1a1d2b] border-[#2a2d3a] text-gray-500" />
+                  <Label className="text-xs font-medium text-muted-foreground mb-1 block">Assigned Agent</Label>
+                  <Input value={user?.name || ''} disabled className="bg-muted border-border text-muted-foreground" />
                 </div>
               )}
             </div>
@@ -405,10 +405,10 @@ export function PropertyForm() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 pt-0 border-t border-[#232738]">
-          <div className="text-xs text-gray-500">Step {step + 1} of {STEPS.length}</div>
+        <div className="flex items-center justify-between p-6 pt-0 border-t border-border">
+          <div className="text-xs text-muted-foreground">Step {step + 1} of {STEPS.length}</div>
           <div className="flex gap-2">
-            {step > 0 && <Button variant="outline" onClick={prev} className="border-[#2a2d3a] text-gray-300 bg-[#1a1d2b] hover:bg-[#252839]"><ChevronLeft className="w-4 h-4 mr-1" />Back</Button>}
+            {step > 0 && <Button variant="outline" onClick={prev} className="border-border text-foreground/80 bg-muted hover:bg-accent"><ChevronLeft className="w-4 h-4 mr-1" />Back</Button>}
             {step < STEPS.length - 1 ? (
               <Button onClick={next} className="gradient-primary shadow-md shadow-cyan-900/30 border-0 text-white">Next<ChevronRight className="w-4 h-4 ml-1" /></Button>
             ) : (

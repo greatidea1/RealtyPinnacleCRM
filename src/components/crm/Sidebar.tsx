@@ -6,6 +6,7 @@ import {
   Bell, Settings, ChevronLeft, ChevronRight, LogOut, Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
@@ -17,31 +18,25 @@ const navItems = [
   { id: 'settings' as const, label: 'Settings', icon: Settings },
 ];
 
-export function Sidebar() {
-  const { currentPage, sidebarCollapsed, toggleSidebar, navigate, logout, user } = useAppStore();
+/** Shared brand + nav + user block used by desktop aside and mobile drawer. */
+function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const { currentPage, navigate, logout, user, toggleSidebar } = useAppStore();
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col h-screen bg-[#13151e] border-r border-[#232738] transition-all duration-300 ease-in-out relative z-30',
-        sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'
-      )}
-    >
-      {/* Brand */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-[#232738] flex-shrink-0">
+    <>
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border flex-shrink-0">
         <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-900/40">
           <Home className="w-5 h-5 text-white" />
         </div>
-        {!sidebarCollapsed && (
-          <div className="overflow-hidden">
+        {!collapsed && (
+          <div className="overflow-hidden min-w-0">
             <h1 className="text-base font-bold gradient-text-primary whitespace-nowrap">Realty Pinnacle</h1>
-            <p className="text-[10px] text-gray-500 -mt-0.5 whitespace-nowrap">CRM</p>
+            <p className="text-[10px] text-muted-foreground -mt-0.5 whitespace-nowrap">CRM</p>
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
         {navItems.map((item) => {
           const isActive = currentPage === item.id ||
             (item.id === 'notifications' && currentPage === 'notifications');
@@ -50,30 +45,33 @@ export function Sidebar() {
           return (
             <button
               key={item.id}
-              onClick={() => navigate(item.id)}
+              type="button"
+              onClick={() => {
+                navigate(item.id);
+                onNavigate?.();
+              }}
               className={cn(
-                'w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group',
+                'w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group min-h-11',
                 isActive
                   ? 'sidebar-active-pill text-cyan-400'
-                  : 'text-gray-400 hover:text-cyan-400/80 hover:bg-[#1a1f30]'
+                  : 'text-muted-foreground hover:text-cyan-400/80 hover:bg-sidebar-accent'
               )}
             >
               <Icon
                 className={cn(
                   'w-5 h-5 flex-shrink-0 transition-colors',
-                  isActive ? 'text-cyan-400' : 'text-gray-500 group-hover:text-cyan-500/80'
+                  isActive ? 'text-cyan-400' : 'text-muted-foreground group-hover:text-cyan-500/80'
                 )}
               />
-              {!sidebarCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
+              {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
-      {/* Collapse toggle + User */}
-      <div className="border-t border-[#232738] p-3 space-y-2">
-        {!sidebarCollapsed && user && (
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#1a1f30]/60">
+      <div className="border-t border-sidebar-border p-3 space-y-2">
+        {!collapsed && user && (
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-sidebar-accent/60">
             <div className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0',
               user.role === 'ADMIN' ? 'bg-violet-600' : 'bg-cyan-600'
@@ -81,23 +79,62 @@ export function Sidebar() {
               {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{user.name}</p>
-              <p className="text-[10px] text-gray-500 truncate">{user.role}</p>
+              <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{user.role}</p>
             </div>
-            <button onClick={logout} className="text-gray-500 hover:text-rose-400 transition-colors" title="Sign out">
+            <button
+              type="button"
+              onClick={logout}
+              className="min-h-10 min-w-10 flex items-center justify-center text-muted-foreground hover:text-rose-400 transition-colors"
+              title="Sign out"
+            >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        <button
-          onClick={toggleSidebar}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-gray-500 hover:text-cyan-400 hover:bg-[#1a1f30] transition-all text-sm"
-        >
-          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          {!sidebarCollapsed && <span>Collapse</span>}
-        </button>
+        {/* Collapse only on desktop aside */}
+        {!onNavigate && (
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 min-h-11 rounded-xl text-muted-foreground hover:text-cyan-400 hover:bg-sidebar-accent transition-all text-sm"
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {!collapsed && <span>Collapse</span>}
+          </button>
+        )}
       </div>
-    </aside>
+    </>
   );
-}
+} // end SidebarNav
+
+/** Desktop sidebar + mobile slide-out drawer navigation. */
+export function Sidebar() {
+  const { sidebarCollapsed, mobileNavOpen, setMobileNavOpen } = useAppStore();
+
+  return (
+    <>
+      {/* Desktop / tablet landscape sidebar */}
+      <aside
+        className={cn(
+          'hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out relative z-30',
+          sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'
+        )}
+      >
+        <SidebarNav collapsed={sidebarCollapsed} />
+      </aside>
+
+      {/* Mobile drawer */}
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side="left"
+          className="p-0 w-[min(100%,280px)] sm:max-w-[280px] bg-sidebar border-sidebar-border flex flex-col gap-0"
+        >
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarNav collapsed={false} onNavigate={() => setMobileNavOpen(false)} />
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+} // end Sidebar
