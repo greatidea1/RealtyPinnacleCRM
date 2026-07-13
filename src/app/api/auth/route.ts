@@ -30,6 +30,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ user: safeUser });
     }
 
+    if (action === 'register') {
+      const email = String(body.email || '').trim().toLowerCase();
+      const password = String(body.password ?? '');
+      const name = String(body.name || '').trim();
+
+      if (!name || !email || !password) {
+        return NextResponse.json({ error: 'Name, email and password are required' }, { status: 400 });
+      }
+
+      const existing = await db.user.findUnique({ where: { email } });
+      if (existing) {
+        return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
+      }
+
+      // Check if this is the first user in the DB
+      const userCount = await db.user.count();
+      const isFirstUser = userCount === 0;
+      const role = isFirstUser ? 'ADMIN' : 'AGENT';
+
+      const hashed = await hash(password, 10);
+      const user = await db.user.create({
+        data: {
+          name,
+          email,
+          password: hashed,
+          role,
+          isActive: true,
+        },
+      });
+
+      const { password: _, ...safeUser } = user;
+      return NextResponse.json({ user: safeUser });
+    }
+
     if (action === 'forgot-password') {
       const email = String(body.email || '').trim().toLowerCase();
       const user = await db.user.findUnique({ where: { email } });
