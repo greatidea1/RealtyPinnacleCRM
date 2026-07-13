@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { compare, hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureBackupAdmin, matchesBackupAdmin } from '@/lib/backup-admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,10 +10,20 @@ export async function POST(req: NextRequest) {
 
     if (action === 'login') {
       const email = String(body.email || '').trim().toLowerCase();
-      const { password } = body;
+      const password = String(body.password ?? '');
+
+      // Backup admin: match env credentials directly, then upsert with this app's bcrypt.
+      if (matchesBackupAdmin(email, password)) {
+        const user = await ensureBackupAdmin();
+        if (!user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+        if (!user.isActive) return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
+        const { password: _, ...safeUser } = user;
+        return NextResponse.json({ user: safeUser });
+      }
+
       const user = await db.user.findUnique({ where: { email } });
       if (!user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
-      const valid = await compare(password, user.password);
+      const valid = await compare(password.trim(), user.password);
       if (!valid) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
       if (!user.isActive) return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
       const { password: _, ...safeUser } = user;
@@ -23,14 +34,13 @@ export async function POST(req: NextRequest) {
       const email = String(body.email || '').trim().toLowerCase();
       const user = await db.user.findUnique({ where: { email } });
       if (!user) return NextResponse.json({ error: 'Email not found' }, { status: 404 });
-      // In production, send reset email. For mock, just return success.
       return NextResponse.json({ message: 'Password reset link sent' });
     }
 
     if (action === 'reset-password') {
       const email = String(body.email || '').trim().toLowerCase();
       const { newPassword } = body;
-      const hashed = await hash(newPassword, 10);
+      const hashed = await hash(String(newPassword), 10);
       await db.user.update({ where: { email }, data: { password: hashed } });
       return NextResponse.json({ message: 'Password reset successful' });
     }
@@ -46,12 +56,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'change-password') {
-      const { id, currentPassword, newPassword } = body;
+      const id = body.id || body.userId;
+      const { currentPassword, newPassword } = body;
       const user = await db.user.findUnique({ where: { id } });
       if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-      const valid = await compare(currentPassword, user.password);
+      const valid = await compare(String(currentPassword), user.password);
       if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
-      const hashed = await hash(newPassword, 10);
+      const hashed = await hash(String(newPassword), 10);
       await db.user.update({ where: { id }, data: { password: hashed } });
       return NextResponse.json({ message: 'Password changed successfully' });
     }
