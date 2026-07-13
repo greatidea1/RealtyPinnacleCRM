@@ -7,17 +7,27 @@ const { hash } = require('bcryptjs');
 
 /** Syncs the env-configured backup admin into the database. */
 async function ensureBackupAdmin() {
-  const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const rawEmail = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD || '';
   const name = (process.env.ADMIN_NAME || 'Admin').trim() || 'Admin';
+  const email = (rawEmail || '').trim().toLowerCase();
+
+  console.log(
+    `Backup admin env: ADMIN_EMAIL=${email ? `"${email}"` : '(empty)'} ADMIN_PASSWORD=${password ? `(set, ${password.length} chars)` : '(empty)'} ADMIN_NAME="${name}"`,
+  );
 
   if (!email || !password) {
-    console.log('Backup admin skipped (set ADMIN_EMAIL and ADMIN_PASSWORD to enable)');
-    return;
+    console.error(
+      'ERROR: ADMIN_EMAIL and ADMIN_PASSWORD must be set in Dokploy Compose Environment, then Redeploy.',
+    );
+    console.error(
+      'Without them, invite-only mode has no login until an admin exists.',
+    );
+    process.exit(1);
   }
 
   if (password.length < 6) {
-    console.error('ADMIN_PASSWORD must be at least 6 characters');
+    console.error('ERROR: ADMIN_PASSWORD must be at least 6 characters');
     process.exit(1);
   }
 
@@ -36,7 +46,7 @@ async function ensureBackupAdmin() {
           isActive: true,
         },
       });
-      console.log(`Backup admin created: ${email}`);
+      console.log(`Backup admin CREATED: ${email}`);
       return;
     }
 
@@ -44,12 +54,12 @@ async function ensureBackupAdmin() {
       where: { email },
       data: {
         password: hashed,
-        name: existing.name || name,
+        name: name || existing.name,
         role: 'ADMIN',
         isActive: true,
       },
     });
-    console.log(`Backup admin synced: ${email}`);
+    console.log(`Backup admin SYNCED (password + ADMIN role): ${email}`);
   } finally {
     await prisma.$disconnect();
   }

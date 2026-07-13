@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
     const { action } = body;
 
     if (action === 'login') {
-      const { email, password } = body;
+      const email = String(body.email || '').trim().toLowerCase();
+      const { password } = body;
       const user = await db.user.findUnique({ where: { email } });
       if (!user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
       const valid = await compare(password, user.password);
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'forgot-password') {
-      const { email } = body;
+      const email = String(body.email || '').trim().toLowerCase();
       const user = await db.user.findUnique({ where: { email } });
       if (!user) return NextResponse.json({ error: 'Email not found' }, { status: 404 });
       // In production, send reset email. For mock, just return success.
@@ -27,7 +28,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'reset-password') {
-      const { email, newPassword } = body;
+      const email = String(body.email || '').trim().toLowerCase();
+      const { newPassword } = body;
       const hashed = await hash(newPassword, 10);
       await db.user.update({ where: { email }, data: { password: hashed } });
       return NextResponse.json({ message: 'Password reset successful' });
