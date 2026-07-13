@@ -1,33 +1,51 @@
 #!/bin/sh
-# Wait for Postgres (when available), apply Prisma migrations, then start Next.js.
+# Wait for Postgres, apply Prisma migrations, then start Next.js.
 set -e
 
 # wait_for_db polls DATABASE_URL until Postgres accepts connections (or times out).
 wait_for_db() {
   if [ -z "$DATABASE_URL" ]; then
-    echo "DATABASE_URL is not set"
+    echo "ERROR: DATABASE_URL is not set"
     exit 1
   fi
 
-  echo "Waiting for database..."
+  # Log host only (never print credentials).
+  db_host=$(printf '%s' "$DATABASE_URL" | sed -E 's#^[^@]*@([^/:?]+).*#\1#')
+  echo "Waiting for database at host: ${db_host:-unknown} ..."
+
   i=0
-  max=60
+  max=90
+  last_err=""
   while [ "$i" -lt "$max" ]; do
+    err_file=$(mktemp)
     if node -e "
       const { PrismaClient } = require('@prisma/client');
       const prisma = new PrismaClient();
       prisma.\$queryRaw\`SELECT 1\`
         .then(async () => { await prisma.\$disconnect(); process.exit(0); })
-        .catch(async () => { await prisma.\$disconnect().catch(() => {}); process.exit(1); });
-    " 2>/dev/null; then
+        .catch(async (e) => {
+          console.error(e.message || e);
+          await prisma.\$disconnect().catch(() => {});
+          process.exit(1);
+        });
+    " 2>"$err_file"; then
+      rm -f "$err_file"
       echo "Database is ready"
       return 0
     fi
+    last_err=$(cat "$err_file" 2>/dev/null || true)
+    rm -f "$err_file"
     i=$((i + 1))
+    if [ $((i % 5)) -eq 0 ]; then
+      echo "Still waiting (${i}/${max}): ${last_err}"
+    fi
     sleep 2
   done
 
-  echo "Database did not become ready in time"
+  echo "ERROR: Database did not become ready in time"
+  echo "Last error: ${last_err}"
+  echo "Hint (Compose): DATABASE_URL host should be the service name 'db',"
+  echo "and POSTGRES_PASSWORD in Dokploy must match the URL password."
   exit 1
 }
 # End wait_for_db
@@ -37,6 +55,6 @@ wait_for_db
 echo "Applying Prisma migrations..."
 npx prisma migrate deploy --schema=./prisma/schema.prisma
 
-echo "Starting Realty Pinnacle CRM..."
+echo "Starting Realty Pinnacle CRM on ${HOSTNAME:-0.0.0.0}:${PORT:-3000} ..."
 exec node server.js
 # End docker-entrypoint.sh

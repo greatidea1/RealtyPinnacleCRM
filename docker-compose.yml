@@ -1,17 +1,23 @@
-# Dokploy: create a Compose service and point it at this file.
-# Set POSTGRES_PASSWORD (and optionally POSTGRES_DB / POSTGRES_USER) in Dokploy env.
+# Dokploy Compose: app + Postgres on the same stack / network.
+# 1. Create a Docker Compose service → select this repo / docker-compose.yml
+# 2. Set env: POSTGRES_PASSWORD (required), optional POSTGRES_USER / POSTGRES_DB
+# 3. Domains → service "app", container port 3000, HTTPS + Let's Encrypt
+# 4. Deploy on your remote server (m1) so DNS points at that server's IP
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    # Do not publish host ports — Dokploy/Traefik routes via Domains (port 3000).
+    expose:
+      - "3000"
     environment:
       NODE_ENV: production
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-realtypinnacle}?schema=public
       TZ: Asia/Kolkata
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-realtypinnacle}?schema=public
     depends_on:
       db:
         condition: service_healthy
@@ -31,6 +37,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    # Postgres stays internal to the compose network (no expose/ports).
 
 volumes:
   postgres_data:
