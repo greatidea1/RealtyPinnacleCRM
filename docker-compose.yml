@@ -1,15 +1,15 @@
 # Dokploy Compose: app + Postgres on the same stack / network.
-# 1. Create a Docker Compose service → select this repo / docker-compose.yml
-# 2. Set env: POSTGRES_PASSWORD (required), optional POSTGRES_USER / POSTGRES_DB
-# 3. Domains → service "app", container port 3000, HTTPS + Let's Encrypt
-# 4. Deploy on your remote server (m1) so DNS points at that server's IP
+# 1. Create a Docker Compose service → this repo / docker-compose.yml
+# 2. Env: POSTGRES_PASSWORD (required); optional POSTGRES_USER / POSTGRES_DB
+# 3. Domains tab → Service: app · Port: 3000 · Host: crm.realtypinnacle.com
+# 4. Redeploy after adding the domain (so Traefik labels + network attach)
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    # Do not publish host ports — Dokploy/Traefik routes via Domains (port 3000).
+    # Traefik routes via Domains — do not publish host ports.
     expose:
       - "3000"
     environment:
@@ -21,6 +21,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - dokploy-network
+      - default
 
   db:
     image: postgres:16-alpine
@@ -37,8 +40,14 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-    # Postgres stays internal to the compose network (no expose/ports).
+    networks:
+      - default
 
 volumes:
   postgres_data:
+
+networks:
+  # Lets Traefik on the remote server reach the app after you add a Domain.
+  dokploy-network:
+    external: true
 # End docker-compose.yml
