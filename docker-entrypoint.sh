@@ -55,8 +55,6 @@ wait_for_db
 echo "Applying Prisma migrations..."
 npx prisma migrate deploy --schema=./prisma/schema.prisma
 
-echo "Ensuring backup admin from env..."
-node ./scripts/bootstrap-admin.js
 
 echo "Starting Realty Pinnacle CRM on ${HOSTNAME:-0.0.0.0}:${PORT:-3000} ..."
 exec node server.js
