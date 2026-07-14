@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { compare, hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureBackupAdmin, matchesBackupAdmin } from '@/lib/backup-admin';
+import { isEnvAdmin, ensureEnvAdminInDb } from '@/lib/backup-admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,45 +12,23 @@ export async function POST(req: NextRequest) {
       const email = String(body.email || '').trim().toLowerCase();
       const password = String(body.password ?? '');
 
-      // Diagnostic logging for debugging login credentials issues
-      const envEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-      const envPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      console.log('[AUTH DIAGNOSTIC] Login request received:', {
-        typedEmail: email,
-        typedEmailLength: email.length,
-        typedPasswordLength: password.trim().length,
-        envEmail: envEmail,
-        envEmailLength: envEmail.length,
-        envPasswordLength: envPassword.length,
-        isMatchesBackupAdmin: matchesBackupAdmin(email, password)
-      });
-
-      if (envPassword.startsWith('"') && envPassword.endsWith('"')) {
-        console.log('[AUTH DIAGNOSTIC WARNING] ADMIN_PASSWORD environment variable contains literal double quotes. This usually happens when wrapping values in env files.');
-      }
-      if (envPassword.startsWith("'") && envPassword.endsWith("'")) {
-        console.log('[AUTH DIAGNOSTIC WARNING] ADMIN_PASSWORD environment variable contains literal single quotes.');
-      }
-
-      // Backup admin: match env credentials directly, then upsert with this app's bcrypt.
-      if (matchesBackupAdmin(email, password)) {
-        const user = await ensureBackupAdmin();
+      // 1. Check if credentials match the env-configured admin.
+      //    If yes, upsert the admin into the DB (so FK relations work)
+      //    and return the user. No bcrypt comparison needed — this is
+      //    a direct string match against the environment variable.
+      if (isEnvAdmin(email, password)) {
+        const user = await ensureEnvAdminInDb();
         if (!user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
         if (!user.isActive) return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
         const { password: _, ...safeUser } = user;
         return NextResponse.json({ user: safeUser });
       }
 
+      // 2. Regular DB user login (agents invited by admin).
       const user = await db.user.findUnique({ where: { email } });
-      if (!user) {
-        console.log(`[AUTH DIAGNOSTIC] User not found in DB for email: ${email}`);
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
-      }
+      if (!user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
       const valid = await compare(password.trim(), user.password);
-      if (!valid) {
-        console.log(`[AUTH DIAGNOSTIC] Password compare failed for user: ${email}`);
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
-      }
+      if (!valid) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
       if (!user.isActive) return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
       const { password: _, ...safeUser } = user;
       return NextResponse.json({ user: safeUser });

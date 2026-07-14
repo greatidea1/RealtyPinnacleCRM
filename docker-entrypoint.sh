@@ -48,14 +48,11 @@ wait_for_db() {
   echo "and POSTGRES_PASSWORD in Dokploy must match the URL password."
   exit 1
 }
-# End wait_for_db
 
 wait_for_db
 
 echo "Applying Prisma migrations..."
 npx prisma migrate deploy --schema=./prisma/schema.prisma
 
-
 echo "Starting Realty Pinnacle CRM on ${HOSTNAME:-0.0.0.0}:${PORT:-3000} ..."
 exec node server.js
-# End docker-entrypoint.sh

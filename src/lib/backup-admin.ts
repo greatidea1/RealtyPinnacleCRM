@@ -1,22 +1,34 @@
 import { db } from '@/lib/db';
 import { hash } from 'bcryptjs';
 
-/** Reads and normalizes backup-admin credentials from process env. */
-export function getBackupAdminEnv() {
+/**
+ * Reads and normalizes admin credentials from environment variables.
+ * Returns empty strings if not set.
+ */
+export function getAdminEnv() {
   const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-  // Trim — Dokploy/.env files often append a trailing newline that breaks bcrypt login.
   const password = (process.env.ADMIN_PASSWORD || '').trim();
   const name = (process.env.ADMIN_NAME || 'Admin').trim() || 'Admin';
   return { email, password, name };
 }
-// End getBackupAdminEnv
 
 /**
- * Ensures the env backup admin exists with the current ADMIN_PASSWORD hash.
- * Uses the same Prisma + bcryptjs stack as login (avoids bootstrap hash drift).
+ * Checks if the provided credentials match the env-configured admin.
+ * This is a simple string comparison — no hashing, no DB lookup.
  */
-export async function ensureBackupAdmin() {
-  const { email, password, name } = getBackupAdminEnv();
+export function isEnvAdmin(email: string, password: string): boolean {
+  const env = getAdminEnv();
+  if (!env.email || !env.password) return false;
+  return email === env.email && password.trim() === env.password;
+}
+
+/**
+ * Ensures the env admin exists in the database (upsert) and returns
+ * the full user record. Called only after isEnvAdmin() returns true,
+ * so the plaintext password is already verified.
+ */
+export async function ensureEnvAdminInDb() {
+  const { email, password, name } = getAdminEnv();
   if (!email || !password) return null;
 
   const hashed = await hash(password, 10);
@@ -31,23 +43,9 @@ export async function ensureBackupAdmin() {
     },
     update: {
       password: hashed,
-      name,
       role: 'ADMIN',
       isActive: true,
     },
   });
   return user;
 }
-// End ensureBackupAdmin
-
-/**
- * True when the typed credentials match the env backup admin.
- * @param email - Normalized login email
- * @param password - Typed password (will be trimmed)
- */
-export function matchesBackupAdmin(email: string, password: string) {
-  const env = getBackupAdminEnv();
-  if (!env.email || !env.password) return false;
-  return email === env.email && password.trim() === env.password;
-}
-// End matchesBackupAdmin
