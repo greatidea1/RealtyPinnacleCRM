@@ -36,7 +36,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/bootstrap-admin.js ./scripts/bootstrap-admin.js
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Prisma CLI + bcrypt for migrate/admin bootstrap (cached).
