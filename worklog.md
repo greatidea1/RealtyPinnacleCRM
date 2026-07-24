@@ -20,3 +20,17 @@ Stage Summary:
 - Admin/Agent role-based access with data isolation
 - Demo credentials: admin@propcrm.com/admin123, priya@propcrm.com/agent123
 - All CRUD operations, drag-to-change deal stages, inline task completion, global live search, multi-step forms with validation
+
+---
+Task: Fast deploys via GHCR (avoid 1h Dokploy on-server builds)
+
+Work Log:
+- Dockerfile runner no longer runs npm install; copies prisma/@prisma/.prisma/bcryptjs from builder; Next build uses BuildKit .next/cache mount
+- Added .github/workflows/docker-publish.yml — push to main builds/pushes ghcr.io/greatidea1/realtypinnaclecrm:main (+ short sha)
+- docker-compose.yml app service uses image: (no build:) so Dokploy only pulls
+
+Dokploy one-time setup:
+1. Make package ghcr.io/greatidea1/realtypinnaclecrm public, OR add a GitHub PAT with read:packages as a Dokploy registry credential for ghcr.io
+2. Confirm the stack compose has image: ghcr.io/greatidea1/realtypinnaclecrm:main and no build: block
+3. Redeploy with pull only — do not use compose up --build / "build from source" on the VPS
+4. After the first successful Actions publish, Dokploy redeploy should be pull + recreate (minutes), not an hour-long npm/next build

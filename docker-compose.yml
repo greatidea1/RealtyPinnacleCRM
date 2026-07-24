@@ -1,12 +1,19 @@
-# Dokploy Compose: app + Postgres on the same stack / network.
+# Dokploy Compose: pull prebuilt app from GHCR + Postgres on the same stack.
+# App image is built by GitHub Actions (.github/workflows/docker-publish.yml).
+# Do NOT use "build from source" / compose --build on Dokploy — pull only.
+#
+# One-time Dokploy setup:
+#   1. GHCR: make ghcr.io/greatidea1/realtypinnaclecrm public, OR add a GitHub PAT
+#      (read:packages) as a Dokploy registry credential for ghcr.io.
+#   2. Ensure this stack uses the compose file below (image:, no build:).
+#   3. Redeploy so Dokploy runs compose up / pull, not up --build.
+#
 # Environment tab must include:
 #   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
 # optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/greatidea1/realtypinnaclecrm:main
     restart: unless-stopped
     # Traefik routes via Domains — do not publish host ports.
     expose:

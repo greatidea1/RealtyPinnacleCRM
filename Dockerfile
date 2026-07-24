@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.7
-# Fast multi-stage build for Dokploy (Next.js standalone + Prisma migrate at boot).
+# Multi-stage build: Next.js standalone + Prisma migrate at boot.
+# Prefer building in GitHub Actions and pulling from GHCR; avoid on-server --build.
 
 FROM node:22-alpine AS deps
 WORKDIR /app
@@ -16,7 +17,10 @@ COPY . .
 # Prisma generate does not need a live DB.
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/realtypinnacle"
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate && npx next build
+# Build with npm + Next compile caches (effective when BuildKit cache persists).
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,target=/app/.next/cache \
+  npx prisma generate && npx next build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -34,13 +38,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+# Prisma CLI + client engines + bcryptjs from builder (no runner npm install).
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
-
-# Prisma CLI + bcryptjs for migrations and auth at runtime.
-RUN --mount=type=cache,target=/root/.npm \
-  npm install --omit=dev --no-audit --no-fund prisma@6.11.1 bcryptjs@3.0.3 \
-  && chown -R nextjs:nodejs /app/node_modules
 
 USER nextjs
 EXPOSE 3000
