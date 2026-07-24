@@ -45,6 +45,8 @@ export async function GET(req: NextRequest) {
         { name: { contains: search } },
         { phone: { contains: search } },
         { preferredLocation: { contains: search } },
+        { preferredCity: { contains: search } },
+        { preferredLocality: { contains: search } },
       ];
     }
 

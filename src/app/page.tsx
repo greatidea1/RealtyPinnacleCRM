@@ -10,6 +10,8 @@ import { PropertiesListPage, PropertyForm } from '@/components/crm/PropertiesPag
 import { PropertyDetail as PropertyDetailPage } from '@/components/crm/PropertyDetail';
 import { ClientsPage } from '@/components/crm/ClientsPage';
 import { ClientDetailPage } from '@/components/crm/ClientDetailPage';
+import { MatchesPage } from '@/components/crm/MatchesPage';
+import { ReportsPage } from '@/components/crm/ReportsPage';
 import { DealsPage, DealDetail, DealForm } from '@/components/crm/DealsPage';
 import { TasksPage, TaskForm } from '@/components/crm/TasksPage';
 import { NotificationsPage } from '@/components/crm/NotificationsPage';
@@ -50,7 +52,9 @@ export default function Home() {
       case 'property-detail': return <PropertyDetailPage />;
       case 'clients': return <ClientsPage />;
       case 'client-detail': return <ClientDetailPage />;
+      case 'matches': return <MatchesPage />;
       case 'deals': return <DealsPage />;
+      case 'reports': return <ReportsPage />;
       case 'deal-detail': return <DealDetail />;
       case 'tasks': return <TasksPage />;
       case 'notifications': return <NotificationsPage />;

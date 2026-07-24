@@ -101,7 +101,9 @@ model Client {
   priority          String   @default("Warm") // Hot, Warm, Cold
   budgetMin         Float?
   budgetMax         Float?
-  preferredLocation String?
+  preferredLocation String? // legacy combined display/search string
+  preferredCity     String?
+  preferredLocality String?
   preferredType     String?
   preferredBeds     Int?
   preferredFurnish  String?

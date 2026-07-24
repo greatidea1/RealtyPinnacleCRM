@@ -36,7 +36,8 @@ const FURNISH_OPTIONS = ['Furnished', 'Semi-Furnished', 'Unfurnished'];
 interface FormData {
   name: string; phone: string; alternatePhone: string; email: string;
   clientType: string; priority: string; budgetMin: string; budgetMax: string;
-  preferredLocation: string; preferredType: string; preferredBeds: string; preferredFurnish: string;
+  preferredCity: string; preferredLocality: string;
+  preferredType: string; preferredBeds: string; preferredFurnish: string;
   leadSource: string; status: string;
   notes: string; reminderDate: string; reminderNote: string;
 }
@@ -44,10 +45,16 @@ interface FormData {
 const INITIAL_FORM: FormData = {
   name: '', phone: '', alternatePhone: '', email: '',
   clientType: 'Buyer', priority: 'Warm', budgetMin: '', budgetMax: '',
-  preferredLocation: '', preferredType: '', preferredBeds: '', preferredFurnish: '',
+  preferredCity: '', preferredLocality: '',
+  preferredType: '', preferredBeds: '', preferredFurnish: '',
   leadSource: '', status: 'New Lead',
   notes: '', reminderDate: '', reminderNote: '',
 };
+
+/** Combines locality + city into the legacy preferredLocation search string. */
+function buildPreferredLocation(locality: string, city: string): string {
+  return [locality.trim(), city.trim()].filter(Boolean).join(', ');
+} // end buildPreferredLocation
 
 function validateStep(step: number, data: FormData): string | null {
   switch (step) {
@@ -83,7 +90,9 @@ export function ClientForm() {
           clientType: editingClient.clientType || 'Buyer', priority: editingClient.priority || 'Warm',
           budgetMin: editingClient.budgetMin ? String(editingClient.budgetMin) : '',
           budgetMax: editingClient.budgetMax ? String(editingClient.budgetMax) : '',
-          preferredLocation: editingClient.preferredLocation || '',
+          preferredCity: editingClient.preferredCity || '',
+          preferredLocality: editingClient.preferredLocality
+            || (!editingClient.preferredCity ? (editingClient.preferredLocation || '') : ''),
           preferredType: editingClient.preferredType || '',
           preferredBeds: editingClient.preferredBeds ? String(editingClient.preferredBeds) : '',
           preferredFurnish: editingClient.preferredFurnish || '',
@@ -115,7 +124,9 @@ export function ClientForm() {
       if (form.email.trim()) payload.email = form.email.trim();
       if (form.budgetMin) payload.budgetMin = Number(form.budgetMin);
       if (form.budgetMax) payload.budgetMax = Number(form.budgetMax);
-      if (form.preferredLocation.trim()) payload.preferredLocation = form.preferredLocation.trim();
+      payload.preferredCity = form.preferredCity.trim() || null;
+      payload.preferredLocality = form.preferredLocality.trim() || null;
+      payload.preferredLocation = buildPreferredLocation(form.preferredLocality, form.preferredCity) || null;
       if (form.preferredType) payload.preferredType = form.preferredType;
       if (form.preferredBeds) payload.preferredBeds = Number(form.preferredBeds);
       if (form.preferredFurnish) payload.preferredFurnish = form.preferredFurnish;
@@ -211,7 +222,16 @@ export function ClientForm() {
                     <div className="space-y-2"><Label className="text-xs font-medium text-muted-foreground">Min Budget (Lakhs)</Label><Input type="number" placeholder="30" value={form.budgetMin} onChange={e => updateField('budgetMin', e.target.value)} className={darkInput} min="0" /></div>
                     <div className="space-y-2"><Label className="text-xs font-medium text-muted-foreground">Max Budget (Lakhs)</Label><Input type="number" placeholder="80" value={form.budgetMax} onChange={e => updateField('budgetMax', e.target.value)} className={darkInput} min="0" /></div>
                   </div>
-                  <div className="space-y-2"><Label className="text-xs font-medium text-muted-foreground">Preferred Location</Label><Input placeholder="Preferred location" value={form.preferredLocation} onChange={e => updateField('preferredLocation', e.target.value)} className={darkInput} /></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-muted-foreground">Preferred Locality</Label>
+                      <Input placeholder="e.g. Andheri West" value={form.preferredLocality} onChange={e => updateField('preferredLocality', e.target.value)} className={darkInput} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-muted-foreground">Preferred City</Label>
+                      <Input placeholder="e.g. Mumbai" value={form.preferredCity} onChange={e => updateField('preferredCity', e.target.value)} className={darkInput} />
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium text-muted-foreground">Property Type</Label>

@@ -359,8 +359,13 @@
   border-radius: 12px;
 }
 
-.dark .leaflet-tile-pane {
-  filter: brightness(0.7) contrast(1.1) saturate(0.3) hue-rotate(180deg) invert(1);
+/* Keep street map readable in dark mode; do not invert into a faux-satellite look */
+.dark .leaflet-tile-pane .map-tiles-street {
+  filter: brightness(0.92) contrast(1.05) saturate(0.9);
+}
+
+.dark .leaflet-tile-pane .map-tiles-satellite {
+  filter: none;
 }
 
 .leaflet-control-zoom a {

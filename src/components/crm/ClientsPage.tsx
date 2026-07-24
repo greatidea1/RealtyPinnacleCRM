@@ -9,7 +9,7 @@ import {
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Search, Plus, SlidersHorizontal, Eye, Pencil, Trash2, Users, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Search, Plus, Eye, Pencil, Trash2, Users, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MapPin } from 'lucide-react';
 
 const CLIENT_TYPES: ('All' | ClientType)[] = ['All', 'Buyer', 'Seller', 'Tenant', 'Landlord', 'Investor'];
 
@@ -111,6 +111,8 @@ export function ClientsPage() {
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Client</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Phone</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Type</th>
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Locality</th>
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">City</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Priority</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Budget</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">Status</th>
@@ -130,6 +132,15 @@ export function ClientsPage() {
                       </td>
                       <td className="px-4 py-3"><span className="text-sm text-foreground/80">{client.phone}</span></td>
                       <td className="px-4 py-3"><span className={cn('text-[11px] px-2 py-0.5 rounded-full border font-medium badge-glossy', TYPE_COLORS[client.clientType])}>{client.clientType}</span></td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {client.preferredLocality || (!client.preferredCity ? (client.preferredLocation || '—') : '—')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground/80">
+                        {client.preferredCity || '—'}
+                      </td>
                       <td className="px-4 py-3"><span className={cn('text-[11px] px-2 py-0.5 rounded-full border font-medium badge-glossy', PRIORITY_COLORS[client.priority])}>{client.priority}</span></td>
                       <td className="px-4 py-3">
                         {client.budgetMin || client.budgetMax ? (

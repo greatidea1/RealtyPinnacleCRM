@@ -141,7 +141,10 @@ export function ClientDetail() {
               </div>
             ) : <div className="mb-5 p-4 rounded-xl bg-muted border border-border"><p className="text-xs text-muted-foreground">No budget specified</p></div>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {client.preferredLocation && <InfoItem icon={MapPin} label="Location" value={client.preferredLocation} />}
+              {(client.preferredLocality || client.preferredLocation) && (
+                <InfoItem icon={MapPin} label="Locality" value={client.preferredLocality || client.preferredLocation || ''} />
+              )}
+              {client.preferredCity && <InfoItem icon={MapPin} label="City" value={client.preferredCity} />}
               {client.preferredType && <InfoItem icon={Building2} label="Type" value={client.preferredType} />}
               {client.preferredBeds && <InfoItem icon={BedDouble} label="Beds" value={`${client.preferredBeds} BHK`} />}
               {client.preferredFurnish && <InfoItem icon={Sofa} label="Furnishing" value={client.preferredFurnish} />}

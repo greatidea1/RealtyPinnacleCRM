@@ -78,7 +78,18 @@ export function ClientDetailPage() {
                 </span>
               </div>
             ) : null}
-            {client.preferredLocation && <div className="flex justify-between gap-3 py-2 border-b border-muted min-w-0"><span className="text-xs text-muted-foreground flex-shrink-0">Preferred Location</span><span className="text-xs text-foreground/80 text-right break-words min-w-0">{client.preferredLocation}</span></div>}
+            {(client.preferredLocality || client.preferredLocation) && (
+              <div className="flex justify-between gap-3 py-2 border-b border-muted min-w-0">
+                <span className="text-xs text-muted-foreground flex-shrink-0">Preferred Locality</span>
+                <span className="text-xs text-foreground/80 text-right break-words min-w-0">{client.preferredLocality || client.preferredLocation}</span>
+              </div>
+            )}
+            {client.preferredCity && (
+              <div className="flex justify-between gap-3 py-2 border-b border-muted min-w-0">
+                <span className="text-xs text-muted-foreground flex-shrink-0">Preferred City</span>
+                <span className="text-xs text-foreground/80 text-right break-words min-w-0">{client.preferredCity}</span>
+              </div>
+            )}
             {client.preferredType && <div className="flex justify-between gap-3 py-2 border-b border-muted min-w-0"><span className="text-xs text-muted-foreground flex-shrink-0">Preferred Type</span><span className="text-xs text-foreground/80 text-right break-words min-w-0">{client.preferredType}</span></div>}
             {client.preferredBeds && <div className="flex justify-between gap-3 py-2 border-b border-muted min-w-0"><span className="text-xs text-muted-foreground flex-shrink-0">Preferred Beds</span><span className="text-xs text-foreground/80 text-right">{client.preferredBeds} BHK</span></div>}
             {client.preferredFurnish && <div className="flex justify-between gap-3 py-2 border-b border-muted min-w-0"><span className="text-xs text-muted-foreground flex-shrink-0">Furnishing</span><span className="text-xs text-foreground/80 text-right">{client.preferredFurnish}</span></div>}

@@ -3,7 +3,7 @@
 import { useAppStore } from '@/lib/store';
 import {
   LayoutDashboard, Building2, Users, Handshake, CheckSquare2,
-  Bell, Settings, ChevronLeft, ChevronRight, LogOut, Home
+  Bell, Settings, ChevronLeft, ChevronRight, LogOut, Home, GitCompareArrows, BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -12,7 +12,9 @@ const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
   { id: 'properties' as const, label: 'Properties', icon: Building2 },
   { id: 'clients' as const, label: 'Clients', icon: Users },
+  { id: 'matches' as const, label: 'Matches', icon: GitCompareArrows },
   { id: 'deals' as const, label: 'Deals', icon: Handshake },
+  { id: 'reports' as const, label: 'Reports', icon: BarChart3 },
   { id: 'tasks' as const, label: 'Tasks', icon: CheckSquare2 },
   { id: 'notifications' as const, label: 'Notifications', icon: Bell },
   { id: 'settings' as const, label: 'Settings', icon: Settings },

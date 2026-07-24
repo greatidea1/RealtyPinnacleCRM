@@ -5,7 +5,7 @@ export type UserRole = 'ADMIN' | 'AGENT';
 export type PageView =
   | 'login' | 'forgot-password' | 'reset-password' | 'verify-email' | 'register'
   | 'dashboard' | 'properties' | 'property-detail' | 'clients' | 'client-detail'
-  | 'deals' | 'deal-detail' | 'tasks' | 'notifications' | 'settings'
+  | 'deals' | 'deal-detail' | 'tasks' | 'notifications' | 'settings' | 'matches' | 'reports'
   | 'search-results';
 
 export type PropertyType = 'Apartment' | 'Villa' | 'Penthouse' | 'Commercial' | 'Plot' | 'Studio';
@@ -98,6 +98,8 @@ export interface Client {
   budgetMin?: number;
   budgetMax?: number;
   preferredLocation?: string;
+  preferredCity?: string;
+  preferredLocality?: string;
   preferredType?: string;
   preferredBeds?: number;
   preferredFurnish?: string;

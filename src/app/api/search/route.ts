@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
             { name: { contains: q } },
             { phone: { contains: q } },
             { preferredLocation: { contains: q } },
+            { preferredCity: { contains: q } },
+            { preferredLocality: { contains: q } },
           ],
         },
         take: 10,
