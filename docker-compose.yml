@@ -9,7 +9,8 @@
 #   4. Dokploy → Registry: host=ghcr.io, username=<GitHub user>, password=<PAT>.
 #   5. Compose service uses image: below with NO build: block; redeploy = pull + recreate.
 #   6. If "manifests/main: denied": PAT/registry missing or wrong; fix step 3–4, retry.
-#   7. If "no matching manifest for linux/arm64": CI built amd64 only — wait for arm64 publish.
+#   7. If "no matching manifest for linux/arm64|amd64": wait for multi-arch CI (:main has both).
+#   8. In Dokploy app General, set Server = Ampere (pull arch must match that host).
 #
 # Environment tab must include:
 #   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD

@@ -44,3 +44,11 @@ GHCR / Dokploy checklist:
 3. Create classic PAT with read:packages → Dokploy Registry ghcr.io with that PAT
 4. Dokploy compose: image ghcr.io/greatidea1/realtypinnaclecrm:main, no build: — redeploy pull only
 5. denied → fix PAT/registry; wrong arch → ensure CI published linux/arm64
+
+---
+Task: Multi-arch GHCR (amd64+arm64) after Dokploy pull failed
+
+Work Log:
+- Error was: no matching manifest for linux/amd64 (Dokploy pulled on amd64; image was arm64-only)
+- docker-publish.yml now builds linux/amd64 + linux/arm64 on native runners, then merges into :main
+- Also verify in Dokploy General that this app's Server is the Ampere node (not only the Dokploy host)
