@@ -1,12 +1,15 @@
-# Dokploy Compose: pull prebuilt app from GHCR + Postgres on the same stack.
-# App image is built by GitHub Actions (.github/workflows/docker-publish.yml).
-# Do NOT use "build from source" / compose --build on Dokploy — pull only.
+# Dokploy Compose (Ampere / arm64): pull prebuilt app from GHCR + Postgres.
+# App image is built by GitHub Actions as linux/arm64 — never build on this VPS.
 #
-# One-time Dokploy setup:
-#   1. GHCR: make ghcr.io/greatidea1/realtypinnaclecrm public, OR add a GitHub PAT
-#      (read:packages) as a Dokploy registry credential for ghcr.io.
-#   2. Ensure this stack uses the compose file below (image:, no build:).
-#   3. Redeploy so Dokploy runs compose up / pull, not up --build.
+# GHCR + Dokploy one-time setup:
+#   1. Push to main (or run workflow_dispatch) → Actions "Docker publish" must be green.
+#   2. GitHub → Packages → realtypinnaclecrm → confirm linux/arm64 exists for :main.
+#   3. Create a classic PAT: https://github.com/settings/tokens
+#        scopes: read:packages (add repo if the package is linked to a private repo).
+#   4. Dokploy → Registry: host=ghcr.io, username=<GitHub user>, password=<PAT>.
+#   5. Compose service uses image: below with NO build: block; redeploy = pull + recreate.
+#   6. If "manifests/main: denied": PAT/registry missing or wrong; fix step 3–4, retry.
+#   7. If "no matching manifest for linux/arm64": CI built amd64 only — wait for arm64 publish.
 #
 # Environment tab must include:
 #   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD

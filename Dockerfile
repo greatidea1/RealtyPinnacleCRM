@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build: Next.js standalone + Prisma migrate at boot.
-# Prefer building in GitHub Actions and pulling from GHCR; avoid on-server --build.
+# Target: linux/arm64 (Oracle Ampere). Built in GitHub Actions (ubuntu-24.04-arm),
+# pushed to GHCR; Dokploy must pull only — never --build on the 900MB VPS.
 
 FROM node:22-alpine AS deps
 WORKDIR /app

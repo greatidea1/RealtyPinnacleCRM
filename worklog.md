@@ -29,8 +29,18 @@ Work Log:
 - Added .github/workflows/docker-publish.yml — push to main builds/pushes ghcr.io/greatidea1/realtypinnaclecrm:main (+ short sha)
 - docker-compose.yml app service uses image: (no build:) so Dokploy only pulls
 
-Dokploy one-time setup:
-1. Make package ghcr.io/greatidea1/realtypinnaclecrm public, OR add a GitHub PAT with read:packages as a Dokploy registry credential for ghcr.io
-2. Confirm the stack compose has image: ghcr.io/greatidea1/realtypinnaclecrm:main and no build: block
-3. Redeploy with pull only — do not use compose up --build / "build from source" on the VPS
-4. After the first successful Actions publish, Dokploy redeploy should be pull + recreate (minutes), not an hour-long npm/next build
+---
+Task: ARM64 GHCR images for Oracle Ampere + Dokploy pull-only
+
+Work Log:
+- docker-publish.yml now runs on ubuntu-24.04-arm with platforms: linux/arm64 (native Ampere image; no QEMU)
+- Added workflow_dispatch so a publish can be triggered without a new commit
+- GHA cache scoped to arm64; Dockerfile/compose comments document Ampere + GHCR setup
+- Fallback if ubuntu-24.04-arm is unavailable on the plan: use runs-on ubuntu-latest, add docker/setup-qemu-action, keep platforms: linux/arm64 (slower)
+
+GHCR / Dokploy checklist:
+1. Merge/push these workflow changes to main (or run "Docker publish" manually)
+2. Wait for Actions green; open github.com/<user>/<repo>/pkgs/container/realtypinnaclecrm and confirm arm64
+3. Create classic PAT with read:packages → Dokploy Registry ghcr.io with that PAT
+4. Dokploy compose: image ghcr.io/greatidea1/realtypinnaclecrm:main, no build: — redeploy pull only
+5. denied → fix PAT/registry; wrong arch → ensure CI published linux/arm64

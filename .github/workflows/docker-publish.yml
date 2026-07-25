@@ -1,10 +1,13 @@
-# Build Next.js image in CI and publish to GHCR for Dokploy pull deploys.
+# Build Next.js image for Oracle Ampere (linux/arm64) and publish to GHCR.
+# Dokploy on the Ampere host must pull this image — never build on the 900MB VPS.
+# Package stays private — Dokploy needs a ghcr.io registry credential (PAT read:packages).
 name: Docker publish
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,11 +15,14 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  # GHCR requires lowercase; keep in sync with docker-compose.yml image:
   IMAGE_NAME: greatidea1/realtypinnaclecrm
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Native ARM runner — required for Ampere. Avoids slow/flaky QEMU emulation.
+    # If this runner is unavailable (some private free plans), see fallback note in worklog.md.
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,14 +45,18 @@ jobs:
           tags: |
             type=raw,value=main
             type=sha,prefix=,format=short
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
-      - name: Build and push
+      - name: Build and push (linux/arm64)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
+# End docker-publish.yml
