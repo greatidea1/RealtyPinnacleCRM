@@ -355,8 +355,15 @@
 
 /* Leaflet theme overrides */
 .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
   background: var(--sidebar) !important;
   border-radius: 12px;
+  font: inherit;
+}
+
+.leaflet-container .leaflet-tile-pane img {
+  max-width: none !important;
 }
 
 /* Keep street map readable in dark mode; do not invert into a faux-satellite look */

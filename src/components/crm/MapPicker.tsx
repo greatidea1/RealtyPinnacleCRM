@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Map as MapIcon, Satellite } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,8 +26,15 @@ const TILE_LAYERS: Record<MapBaseLayer, { url: string; attribution: string; maxZ
   },
 };
 
+/** Forces Leaflet to recalculate container size and reload visible tiles. */
+function refreshMapSize(map: L.Map) {
+  map.invalidateSize({ animate: false });
+}
+// End refreshMapSize
+
 /** Interactive Leaflet map with Map (street) default and optional Satellite basemap. */
 export default function MapPicker({ center, onPositionChange }: MapPickerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -82,7 +90,24 @@ export default function MapPicker({ center, onPositionChange }: MapPickerProps) 
     mapInstanceRef.current = map;
     markerRef.current = marker;
 
+    // Dialogs/step UIs often mount with 0 size — refresh after layout settles
+    const rafId = requestAnimationFrame(() => refreshMapSize(map));
+    const t1 = window.setTimeout(() => refreshMapSize(map), 50);
+    const t2 = window.setTimeout(() => refreshMapSize(map), 250);
+    const t3 = window.setTimeout(() => refreshMapSize(map), 500);
+
+    const observer = new ResizeObserver(() => {
+      refreshMapSize(map);
+    });
+    if (containerRef.current) observer.observe(containerRef.current);
+    if (mapRef.current) observer.observe(mapRef.current);
+
     return () => {
+      cancelAnimationFrame(rafId);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+      observer.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -97,6 +122,7 @@ export default function MapPicker({ center, onPositionChange }: MapPickerProps) 
     if (markerRef.current && mapInstanceRef.current) {
       markerRef.current.setLatLng(center);
       mapInstanceRef.current.setView(center, mapInstanceRef.current.getZoom());
+      refreshMapSize(mapInstanceRef.current);
     }
   }, [center]);
 
@@ -116,16 +142,18 @@ export default function MapPicker({ center, onPositionChange }: MapPickerProps) 
       className: baseLayer === 'map' ? 'map-tiles-street' : 'map-tiles-satellite',
     }).addTo(map);
     tileLayerRef.current = tileLayer;
+    refreshMapSize(map);
   }, [baseLayer]);
 
   /** Switches the basemap between street map and satellite imagery. */
   const handleBaseLayerChange = (layer: MapBaseLayer) => {
     setBaseLayer(layer);
-  }; // end handleBaseLayerChange
+  };
+  // End handleBaseLayerChange
 
   return (
-    <div className="relative w-full h-full min-h-[200px]">
-      <div ref={mapRef} className="w-full h-full min-h-[200px] rounded-xl overflow-hidden" />
+    <div ref={containerRef} className="relative w-full h-full min-h-[200px]">
+      <div ref={mapRef} className="absolute inset-0 w-full h-full rounded-xl overflow-hidden z-0" />
       <div className="absolute top-3 right-3 z-[1000] flex rounded-lg overflow-hidden border border-border bg-background/95 shadow-lg backdrop-blur-sm">
         <button
           type="button"
@@ -158,4 +186,5 @@ export default function MapPicker({ center, onPositionChange }: MapPickerProps) 
       </div>
     </div>
   );
-} // end MapPicker
+}
+// End MapPicker
