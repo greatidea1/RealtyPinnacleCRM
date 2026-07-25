@@ -51,8 +51,10 @@ wait_for_db() {
 
 wait_for_db
 
+# Use node + prisma build entry (runner image has no .bin / npx prisma).
 echo "Applying Prisma migrations..."
-npx prisma migrate deploy --schema=./prisma/schema.prisma
+node ./node_modules/prisma/build/index.js migrate deploy --schema=./prisma/schema.prisma
 
 echo "Starting Realty Pinnacle CRM on ${HOSTNAME:-0.0.0.0}:${PORT:-3000} ..."
 exec node server.js
+# End docker-entrypoint.sh

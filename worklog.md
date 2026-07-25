@@ -52,3 +52,11 @@ Work Log:
 - Error was: no matching manifest for linux/amd64 (Dokploy pulled on amd64; image was arm64-only)
 - docker-publish.yml now builds linux/amd64 + linux/arm64 on native runners, then merges into :main
 - Also verify in Dokploy General that this app's Server is the Ampere node (not only the Dokploy host)
+
+---
+Task: Fix crash loop prisma: not found (502 Bad Gateway)
+
+Work Log:
+- App container: DB ready, then `npx prisma migrate deploy` → sh: prisma: not found (slim runner has no .bin)
+- Postgres logs were fine (broken pipe / checkpoints are normal)
+- Entrypoint now runs `node ./node_modules/prisma/build/index.js migrate deploy`
