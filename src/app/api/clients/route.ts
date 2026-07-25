@@ -1,9 +1,32 @@
 import { db } from '@/lib/db';
+import { resolveClientPreferredLocation } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
 async function logActivity(userId: string, entityType: string, entityId: string, action: string, description: string) {
   await db.activity.create({ data: { userId, entityType, entityId, action, description } });
 }
+
+/** Strips non-Prisma client fields and resolves preferred location against Location Master. */
+async function prepareClientData(raw: Record<string, unknown>) {
+  const {
+    preferredCityId,
+    preferredLocalityId,
+    preferredCity,
+    preferredLocality,
+    preferredLocation: _ignoredPreferredLocation,
+    ...rest
+  } = raw;
+
+  const location = await resolveClientPreferredLocation({
+    preferredCityId: typeof preferredCityId === 'string' ? preferredCityId : null,
+    preferredLocalityId: typeof preferredLocalityId === 'string' ? preferredLocalityId : null,
+    preferredCity: typeof preferredCity === 'string' ? preferredCity : null,
+    preferredLocality: typeof preferredLocality === 'string' ? preferredLocality : null,
+  });
+
+  return { ...rest, ...location };
+}
+// End prepareClientData
 
 export async function GET(req: NextRequest) {
   try {
@@ -74,14 +97,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { userId, reminderDate, reminderNote, ...data } = body;
+    const prepared = await prepareClientData(data) as Record<string, unknown>;
 
     const client = await db.client.create({
       data: {
-        ...data,
-        assignedToId: data.assignedToId || userId,
+        ...(prepared as object),
+        assignedToId: (prepared.assignedToId as string) || userId,
         reminderDate: reminderDate ? new Date(reminderDate) : null,
         reminderNote,
-      },
+      } as Parameters<typeof db.client.create>[0]['data'],
     });
 
     if (reminderDate) {
@@ -122,13 +146,15 @@ export async function PUT(req: NextRequest) {
     const existing = await db.client.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+    const prepared = await prepareClientData(data);
+
     const client = await db.client.update({
       where: { id },
       data: {
-        ...data,
+        ...(prepared as object),
         reminderDate: reminderDate ? new Date(reminderDate) : null,
         reminderNote,
-      },
+      } as Parameters<typeof db.client.update>[0]['data'],
     });
 
     await logActivity(userId, 'Client', id, 'updated', `Updated client: ${client.name}`);

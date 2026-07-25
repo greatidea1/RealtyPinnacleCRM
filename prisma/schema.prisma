@@ -27,6 +27,31 @@ model User {
   activities    Activity[]
 }
 
+model City {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  localities Locality[]
+  properties Property[] @relation("PropertyCity")
+  clients    Client[]   @relation("ClientPreferredCity")
+}
+
+model Locality {
+  id        String   @id @default(cuid())
+  name      String
+  cityId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  properties Property[] @relation("PropertyLocality")
+  clients    Client[]   @relation("ClientPreferredLocality")
+
+  @@unique([cityId, name])
+  @@index([cityId])
+  @@index([name])
+}
+
 model Property {
   id              String   @id @default(cuid())
   propertyId      String?  // Custom property ID like PROP-001
@@ -44,6 +69,8 @@ model Property {
   facing          String?  // N, NE, E, SE, S, SW, W, NW
   locality        String
   city            String
+  cityId          String?
+  localityId      String?
   pincode         String?
   fullAddress     String
   landmark        String?
@@ -67,10 +94,15 @@ model Property {
   updatedAt       DateTime @updatedAt
 
   assignedTo  User       @relation(fields: [assignedToId], references: [id])
+  cityRef     City?      @relation("PropertyCity", fields: [cityId], references: [id], onDelete: SetNull)
+  localityRef Locality?  @relation("PropertyLocality", fields: [localityId], references: [id], onDelete: SetNull)
   amenities   PropertyAmenity[]
   photos      PropertyPhoto[]
   deals       Deal[]
   tasks       Task[]
+
+  @@index([cityId])
+  @@index([localityId])
 }
 
 model PropertyAmenity {
@@ -104,6 +136,8 @@ model Client {
   preferredLocation String? // legacy combined display/search string
   preferredCity     String?
   preferredLocality String?
+  preferredCityId   String?
+  preferredLocalityId String?
   preferredType     String?
   preferredBeds     Int?
   preferredFurnish  String?
@@ -118,8 +152,13 @@ model Client {
   updatedAt         DateTime @updatedAt
 
   assignedTo User  @relation(fields: [assignedToId], references: [id])
+  preferredCityRef City? @relation("ClientPreferredCity", fields: [preferredCityId], references: [id], onDelete: SetNull)
+  preferredLocalityRef Locality? @relation("ClientPreferredLocality", fields: [preferredLocalityId], references: [id], onDelete: SetNull)
   deals      Deal[]
   tasks      Task[]
+
+  @@index([preferredCityId])
+  @@index([preferredLocalityId])
 }
 
 model Deal {

@@ -29,6 +29,36 @@ export interface User {
   createdAt: string;
 }
 
+export interface City {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: { localities: number };
+}
+
+export interface Locality {
+  id: string;
+  name: string;
+  cityId: string;
+  city?: City;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: { properties: number; clients: number };
+}
+
+export interface LocationMasterRow {
+  id: string;
+  locality: string;
+  localityId: string;
+  city: string;
+  cityId: string;
+  propertyCount: number;
+  clientCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Property {
   id: string;
   propertyId?: string;
@@ -46,6 +76,8 @@ export interface Property {
   facing?: string;
   locality: string;
   city: string;
+  cityId?: string;
+  localityId?: string;
   pincode?: string;
   fullAddress: string;
   landmark?: string;
@@ -100,6 +132,8 @@ export interface Client {
   preferredLocation?: string;
   preferredCity?: string;
   preferredLocality?: string;
+  preferredCityId?: string;
+  preferredLocalityId?: string;
   preferredType?: string;
   preferredBeds?: number;
   preferredFurnish?: string;

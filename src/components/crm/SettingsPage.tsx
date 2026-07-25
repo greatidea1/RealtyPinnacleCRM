@@ -14,13 +14,12 @@ import { formatDate } from '@/lib/datetime';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LocationMasterSection } from '@/components/crm/LocationMasterSection';
 
 export function SettingsPage() {
   const { user } = useAppStore();
   const [users, setUsers] = useState<UserType[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [showAddUser, setShowAddUser] = useState(false);
-  const [newUserMsg, setNewUserMsg] = useState('');
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {
@@ -41,6 +40,9 @@ export function SettingsPage() {
 
       {/* Change Password */}
       <ChangePasswordSection user={user} />
+
+      {/* Admin: Location Master */}
+      {user?.role === 'ADMIN' && <LocationMasterSection />}
 
       {/* Admin: User Management */}
       {user?.role === 'ADMIN' && (

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Property, PropertyStatus, PropertyType } from '@/lib/types';
 import { STATUS_COLORS, formatPrice, formatPriceShort, ALL_AMENITIES, getInitials, getAvatarColor, timeAgo, PRIORITY_COLORS, STAGE_COLORS } from '@/lib/types';
+import { LocationCombobox } from '@/components/crm/LocationCombobox';
 import dynamic from 'next/dynamic';
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
@@ -369,7 +370,7 @@ export function PropertyForm() {
     title: '', propertyType: 'Apartment' as PropertyType, bedrooms: '', bathrooms: '',
     carpetArea: '', builtUpArea: '', price: '', priceUnit: 'Lakhs',
     floorNumber: '', totalFloors: '', ageOfProperty: '', facing: '',
-    locality: '', city: '', pincode: '', fullAddress: '', landmark: '',
+    locality: '', city: '', cityId: '', localityId: '', pincode: '', fullAddress: '', landmark: '',
     latitude: '', longitude: '', reraNumber: '', developerName: '',
     projectName: '', contactPerson: '', contactPhone: '', contactEmail: '',
     contactDesignation: '', description: '', furnishing: '',
@@ -377,20 +378,50 @@ export function PropertyForm() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mapCenter, setMapCenter] = useState<[number, number]>(18.5204, 73.8567);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([18.5204, 73.8567]);
 
   useEffect(() => {
-    if (showPropertyForm) {
-      setStep(0); setError('');
+    if (!showPropertyForm) return;
+    let cancelled = false;
+    setStep(0);
+    setError('');
+
+    /** Hydrates form state and resolves Location Master IDs for legacy free-text values. */
+    const hydrate = async () => {
       if (editingProperty) {
         const p = editingProperty;
+        let cityId = p.cityId || '';
+        let localityId = p.localityId || '';
+        if ((p.city || p.locality) && (!cityId || !localityId)) {
+          try {
+            if (p.city && !cityId) {
+              const cityRes = await fetch('/api/locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create-city', name: p.city }),
+              });
+              const cityData = await cityRes.json();
+              if (cityData.city) cityId = cityData.city.id;
+            }
+            if (p.locality && cityId && !localityId) {
+              const locRes = await fetch('/api/locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create-locality', name: p.locality, cityId }),
+              });
+              const locData = await locRes.json();
+              if (locData.locality) localityId = locData.locality.id;
+            }
+          } catch { /* keep free-text values */ }
+        }
+        if (cancelled) return;
         setForm({
           title: p.title, propertyType: p.propertyType, bedrooms: String(p.bedrooms || ''),
           bathrooms: String(p.bathrooms || ''), carpetArea: String(p.carpetArea || ''),
           builtUpArea: String(p.builtUpArea || ''), price: String(p.price),
           priceUnit: p.priceUnit, floorNumber: String(p.floorNumber || ''),
           totalFloors: String(p.totalFloors || ''), ageOfProperty: p.ageOfProperty || '',
-          facing: p.facing || '', locality: p.locality, city: p.city,
+          facing: p.facing || '', locality: p.locality, city: p.city, cityId, localityId,
           pincode: p.pincode || '', fullAddress: p.fullAddress, landmark: p.landmark || '',
           latitude: String(p.latitude || ''), longitude: String(p.longitude || ''),
           reraNumber: p.reraNumber || '', developerName: p.developerName || '',
@@ -402,10 +433,14 @@ export function PropertyForm() {
         });
         if (p.latitude && p.longitude) setMapCenter([p.latitude, p.longitude]);
       } else {
-        setForm({ title: '', propertyType: 'Apartment', bedrooms: '', bathrooms: '', carpetArea: '', builtUpArea: '', price: '', priceUnit: 'Lakhs', floorNumber: '', totalFloors: '', ageOfProperty: '', facing: '', locality: '', city: '', pincode: '', fullAddress: '', landmark: '', latitude: '', longitude: '', reraNumber: '', developerName: '', projectName: '', contactPerson: '', contactPhone: '', contactEmail: '', contactDesignation: '', description: '', furnishing: '', status: 'Active', amenities: [] });
+        setForm({ title: '', propertyType: 'Apartment', bedrooms: '', bathrooms: '', carpetArea: '', builtUpArea: '', price: '', priceUnit: 'Lakhs', floorNumber: '', totalFloors: '', ageOfProperty: '', facing: '', locality: '', city: '', cityId: '', localityId: '', pincode: '', fullAddress: '', landmark: '', latitude: '', longitude: '', reraNumber: '', developerName: '', projectName: '', contactPerson: '', contactPhone: '', contactEmail: '', contactDesignation: '', description: '', furnishing: '', status: 'Active', amenities: [] });
         setMapCenter([18.5204, 73.8567]);
       }
-    }
+    };
+    // End hydrate
+
+    hydrate();
+    return () => { cancelled = true; };
   }, [showPropertyForm, editingProperty]);
 
   const toggleAmenity = (a: string) => {
@@ -414,6 +449,7 @@ export function PropertyForm() {
 
   const handleSubmit = async () => {
     if (!form.title || !form.price) { setError('Title and price are required'); setStep(0); return; }
+    if (!form.city || !form.locality) { setError('City and Locality are required'); setStep(1); return; }
     setLoading(true); setError('');
     try {
       const payload: any = {
@@ -427,7 +463,9 @@ export function PropertyForm() {
         floorNumber: form.floorNumber ? parseInt(form.floorNumber) : null,
         totalFloors: form.totalFloors ? parseInt(form.totalFloors) : null,
         ageOfProperty: form.ageOfProperty || null, facing: form.facing || null,
-        locality: form.locality, city: form.city, pincode: form.pincode || null,
+        locality: form.locality, city: form.city,
+        cityId: form.cityId || null, localityId: form.localityId || null,
+        pincode: form.pincode || null,
         fullAddress: form.fullAddress || form.locality, landmark: form.landmark || null,
         latitude: form.latitude ? parseFloat(form.latitude) : null,
         longitude: form.longitude ? parseFloat(form.longitude) : null,
@@ -491,8 +529,44 @@ export function PropertyForm() {
         {step === 1 && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Locality *</Label><input value={form.locality} onChange={e => setForm({ ...form, locality: e.target.value })} className={inputCls} placeholder="Locality" /></div>
-              <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">City *</Label><input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className={inputCls} placeholder="City" /></div>
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">City *</Label>
+                <LocationCombobox
+                  mode="city"
+                  valueId={form.cityId}
+                  valueName={form.city}
+                  placeholder="Select city"
+                  allowClear={false}
+                  onSelect={(sel) => {
+                    setForm((f) => ({
+                      ...f,
+                      cityId: sel?.id || '',
+                      city: sel?.name || '',
+                      localityId: '',
+                      locality: '',
+                    }));
+                  }}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Locality *</Label>
+                <LocationCombobox
+                  mode="locality"
+                  valueId={form.localityId}
+                  valueName={form.locality}
+                  cityId={form.cityId}
+                  cityName={form.city}
+                  placeholder="Select locality"
+                  allowClear={false}
+                  onSelect={(sel) => {
+                    setForm((f) => ({
+                      ...f,
+                      localityId: sel?.id || '',
+                      locality: sel?.name || '',
+                    }));
+                  }}
+                />
+              </div>
             </div>
             <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Full Address</Label><input value={form.fullAddress} onChange={e => setForm({ ...form, fullAddress: e.target.value })} className={inputCls} placeholder="Full address" /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -1,9 +1,28 @@
 import { db } from '@/lib/db';
+import { resolveCityAndLocality } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
 async function logActivity(userId: string, entityType: string, entityId: string, action: string, description: string) {
   await db.activity.create({ data: { userId, entityType, entityId, action, description } });
 }
+
+/** Resolves property city/locality against Location Master and syncs denormalized names. */
+async function preparePropertyData(raw: Record<string, unknown>) {
+  const { cityId, localityId, city, locality, ...rest } = raw;
+  const location = await resolveCityAndLocality({
+    cityId: typeof cityId === 'string' ? cityId : null,
+    localityId: typeof localityId === 'string' ? localityId : null,
+    city: typeof city === 'string' ? city : null,
+    locality: typeof locality === 'string' ? locality : null,
+  });
+
+  if (!location.city || !location.locality) {
+    throw new Error('City and Locality are required');
+  }
+
+  return { ...rest, ...location };
+}
+// End preparePropertyData
 
 export async function GET(req: NextRequest) {
   try {
@@ -79,12 +98,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { userId, amenities, newPhotos, _count, assignedTo, photos, ...data } = body;
+    let prepared: Record<string, unknown>;
+    try {
+      prepared = await preparePropertyData(data);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid location';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
 
     const property = await db.property.create({
       data: {
-        ...data,
-        assignedToId: data.assignedToId || userId,
-      },
+        ...(prepared as object),
+        assignedToId: (prepared.assignedToId as string) || userId,
+      } as Parameters<typeof db.property.create>[0]['data'],
     });
 
     if (amenities && amenities.length > 0) {
@@ -124,7 +150,17 @@ export async function PUT(req: NextRequest) {
     const existing = await db.property.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const property = await db.property.update({ where: { id }, data });
+    let prepared: Record<string, unknown>;
+    try {
+      prepared = await preparePropertyData(data);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid location';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+    const property = await db.property.update({
+      where: { id },
+      data: prepared as Parameters<typeof db.property.update>[0]['data'],
+    });
 
     if (amenities !== undefined) {
       await db.propertyAmenity.deleteMany({ where: { propertyId: id } });

@@ -18,6 +18,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { LocationCombobox } from '@/components/crm/LocationCombobox';
 
 const STEPS = [
   { key: 'personal', label: 'Personal Info', icon: User },
@@ -37,6 +38,7 @@ interface FormData {
   name: string; phone: string; alternatePhone: string; email: string;
   clientType: string; priority: string; budgetMin: string; budgetMax: string;
   preferredCity: string; preferredLocality: string;
+  preferredCityId: string; preferredLocalityId: string;
   preferredType: string; preferredBeds: string; preferredFurnish: string;
   leadSource: string; status: string;
   notes: string; reminderDate: string; reminderNote: string;
@@ -46,6 +48,7 @@ const INITIAL_FORM: FormData = {
   name: '', phone: '', alternatePhone: '', email: '',
   clientType: 'Buyer', priority: 'Warm', budgetMin: '', budgetMax: '',
   preferredCity: '', preferredLocality: '',
+  preferredCityId: '', preferredLocalityId: '',
   preferredType: '', preferredBeds: '', preferredFurnish: '',
   leadSource: '', status: 'New Lead',
   notes: '', reminderDate: '', reminderNote: '',
@@ -82,17 +85,53 @@ export function ClientForm() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (showClientForm) {
+    if (!showClientForm) return;
+    let cancelled = false;
+
+    /** Hydrates form state and resolves Location Master IDs for legacy free-text values. */
+    const hydrate = async () => {
       if (editingClient) {
+        const preferredCity = editingClient.preferredCity || '';
+        const preferredLocality = editingClient.preferredLocality
+          || (!editingClient.preferredCity ? (editingClient.preferredLocation || '') : '');
+        let preferredCityId = editingClient.preferredCityId || '';
+        let preferredLocalityId = editingClient.preferredLocalityId || '';
+
+        if ((preferredCity || preferredLocality) && (!preferredCityId || !preferredLocalityId)) {
+          try {
+            if (preferredCity && !preferredCityId) {
+              const cityRes = await fetch('/api/locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create-city', name: preferredCity }),
+              });
+              const cityData = await cityRes.json();
+              if (cityData.city) preferredCityId = cityData.city.id;
+            }
+            if (preferredLocality && preferredCityId && !preferredLocalityId) {
+              const locRes = await fetch('/api/locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'create-locality',
+                  name: preferredLocality,
+                  cityId: preferredCityId,
+                }),
+              });
+              const locData = await locRes.json();
+              if (locData.locality) preferredLocalityId = locData.locality.id;
+            }
+          } catch { /* keep free-text values */ }
+        }
+
+        if (cancelled) return;
         setForm({
           name: editingClient.name || '', phone: editingClient.phone || '',
           alternatePhone: editingClient.alternatePhone || '', email: editingClient.email || '',
           clientType: editingClient.clientType || 'Buyer', priority: editingClient.priority || 'Warm',
           budgetMin: editingClient.budgetMin ? String(editingClient.budgetMin) : '',
           budgetMax: editingClient.budgetMax ? String(editingClient.budgetMax) : '',
-          preferredCity: editingClient.preferredCity || '',
-          preferredLocality: editingClient.preferredLocality
-            || (!editingClient.preferredCity ? (editingClient.preferredLocation || '') : ''),
+          preferredCity, preferredLocality, preferredCityId, preferredLocalityId,
           preferredType: editingClient.preferredType || '',
           preferredBeds: editingClient.preferredBeds ? String(editingClient.preferredBeds) : '',
           preferredFurnish: editingClient.preferredFurnish || '',
@@ -101,9 +140,16 @@ export function ClientForm() {
           reminderDate: editingClient.reminderDate ? editingClient.reminderDate.slice(0, 16) : '',
           reminderNote: editingClient.reminderNote || '',
         });
-      } else { setForm(INITIAL_FORM); }
-      setStep(0); setErrors(null);
-    }
+      } else {
+        setForm(INITIAL_FORM);
+      }
+      setStep(0);
+      setErrors(null);
+    };
+    // End hydrate
+
+    hydrate();
+    return () => { cancelled = true; };
   }, [showClientForm, editingClient]);
 
   const updateField = (field: keyof FormData, value: string) => { setForm(prev => ({ ...prev, [field]: value })); setErrors(null); };
@@ -126,6 +172,8 @@ export function ClientForm() {
       if (form.budgetMax) payload.budgetMax = Number(form.budgetMax);
       payload.preferredCity = form.preferredCity.trim() || null;
       payload.preferredLocality = form.preferredLocality.trim() || null;
+      payload.preferredCityId = form.preferredCityId || null;
+      payload.preferredLocalityId = form.preferredLocalityId || null;
       payload.preferredLocation = buildPreferredLocation(form.preferredLocality, form.preferredCity) || null;
       if (form.preferredType) payload.preferredType = form.preferredType;
       if (form.preferredBeds) payload.preferredBeds = Number(form.preferredBeds);
@@ -224,12 +272,42 @@ export function ClientForm() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-muted-foreground">Preferred Locality</Label>
-                      <Input placeholder="e.g. Andheri West" value={form.preferredLocality} onChange={e => updateField('preferredLocality', e.target.value)} className={darkInput} />
+                      <Label className="text-xs font-medium text-muted-foreground">Preferred City</Label>
+                      <LocationCombobox
+                        mode="city"
+                        valueId={form.preferredCityId}
+                        valueName={form.preferredCity}
+                        placeholder="e.g. Mumbai"
+                        onSelect={(sel) => {
+                          setForm((prev) => ({
+                            ...prev,
+                            preferredCityId: sel?.id || '',
+                            preferredCity: sel?.name || '',
+                            preferredLocalityId: '',
+                            preferredLocality: '',
+                          }));
+                          setErrors(null);
+                        }}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium text-muted-foreground">Preferred City</Label>
-                      <Input placeholder="e.g. Mumbai" value={form.preferredCity} onChange={e => updateField('preferredCity', e.target.value)} className={darkInput} />
+                      <Label className="text-xs font-medium text-muted-foreground">Preferred Locality</Label>
+                      <LocationCombobox
+                        mode="locality"
+                        valueId={form.preferredLocalityId}
+                        valueName={form.preferredLocality}
+                        cityId={form.preferredCityId}
+                        cityName={form.preferredCity}
+                        placeholder="e.g. Andheri West"
+                        onSelect={(sel) => {
+                          setForm((prev) => ({
+                            ...prev,
+                            preferredLocalityId: sel?.id || '',
+                            preferredLocality: sel?.name || '',
+                          }));
+                          setErrors(null);
+                        }}
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
