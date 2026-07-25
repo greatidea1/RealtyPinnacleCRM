@@ -51,9 +51,9 @@ wait_for_db() {
 
 wait_for_db
 
-# Use node + prisma build entry (runner image has no .bin / npx prisma).
+# Prisma CLI lives in /prisma-tools (full dep tree). App code stays in /app.
 echo "Applying Prisma migrations..."
-node ./node_modules/prisma/build/index.js migrate deploy --schema=./prisma/schema.prisma
+node /prisma-tools/node_modules/prisma/build/index.js migrate deploy --schema=/app/prisma/schema.prisma
 
 echo "Starting Realty Pinnacle CRM on ${HOSTNAME:-0.0.0.0}:${PORT:-3000} ..."
 exec node server.js

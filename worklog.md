@@ -60,3 +60,12 @@ Work Log:
 - App container: DB ready, then `npx prisma migrate deploy` → sh: prisma: not found (slim runner has no .bin)
 - Postgres logs were fine (broken pipe / checkpoints are normal)
 - Entrypoint now runs `node ./node_modules/prisma/build/index.js migrate deploy`
+
+---
+Task: Fix Prisma migrate missing transitive deps (still crash looping)
+
+Work Log:
+- After prisma path fix, CLI still failed: @prisma/config needs c12/effect/empathic (not copied in slim image)
+- Added prisma-tools Docker stage: npm install only prisma + @prisma/client with full tree
+- Entrypoint: node /prisma-tools/node_modules/prisma/build/index.js migrate deploy --schema=/app/prisma/schema.prisma
+- Set NODE_OPTIONS=--max-old-space-size=384 for 900MB host

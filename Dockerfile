@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build: Next.js standalone + Prisma migrate at boot.
-# Target: linux/arm64 (Oracle Ampere). Built in GitHub Actions (ubuntu-24.04-arm),
-# pushed to GHCR; Dokploy must pull only — never --build on the 900MB VPS.
+# Built in GitHub Actions (multi-arch amd64/arm64), pushed to GHCR;
+# Dokploy must pull only — never --build on the 900MB VPS.
 
 FROM node:22-alpine AS deps
 WORKDIR /app
@@ -23,6 +23,23 @@ RUN --mount=type=cache,target=/root/.npm \
     --mount=type=cache,target=/app/.next/cache \
   npx prisma generate && npx next build
 
+# Full Prisma CLI dependency tree (c12/effect/engines) for migrate deploy at boot.
+FROM node:22-alpine AS prisma-tools
+WORKDIR /prisma-tools
+RUN apk add --no-cache libc6-compat openssl
+COPY package.json ./
+RUN node -e "\
+  const pkg = require('./package.json');\
+  require('fs').writeFileSync('package.json', JSON.stringify({\
+    name: 'prisma-tools',\
+    private: true,\
+    dependencies: {\
+      prisma: pkg.dependencies.prisma,\
+      '@prisma/client': pkg.dependencies['@prisma/client']\
+    }\
+  }));" \
+  && npm install --no-audit --no-fund
+
 FROM node:22-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl tzdata \
@@ -34,19 +51,22 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV TZ=Asia/Kolkata
+# Keep Node heap modest on the 900MB Ampere box.
+ENV NODE_OPTIONS=--max-old-space-size=384
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-# Prisma CLI + client engines + bcryptjs from builder (no runner npm install).
-# Entrypoint runs: node ./node_modules/prisma/build/index.js migrate deploy
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+# Generated client engines used by wait_for_db / app runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
+# Complete Prisma CLI install (separate tree so migrate has c12/effect/engines).
+COPY --from=prisma-tools --chown=nextjs:nodejs /prisma-tools /prisma-tools
 COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
 ENTRYPOINT ["./docker-entrypoint.sh"]
+# End Dockerfile
