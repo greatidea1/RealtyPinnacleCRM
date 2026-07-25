@@ -69,3 +69,11 @@ Work Log:
 - Added prisma-tools Docker stage: npm install only prisma + @prisma/client with full tree
 - Entrypoint: node /prisma-tools/node_modules/prisma/build/index.js migrate deploy --schema=/app/prisma/schema.prisma
 - Set NODE_OPTIONS=--max-old-space-size=384 for 900MB host
+
+---
+Task: Dokploy still ran old image (prisma: not found after GHCR fix)
+
+Work Log:
+- Repo main already had /prisma-tools entrypoint (96a4628) but app logs still showed npx prisma: not found
+- Root cause: compose `up --build` without pull reused cached local :main
+- Added pull_policy: always on app service; user must force-pull / redeploy after push

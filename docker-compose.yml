@@ -18,6 +18,9 @@
 services:
   app:
     image: ghcr.io/greatidea1/realtypinnaclecrm:main
+    # Dokploy compose uses `up --build` without --pull; without this, an old
+    # local :main image is reused forever (e.g. still shows: prisma: not found).
+    pull_policy: always
     restart: unless-stopped
     # Traefik routes via Domains — do not publish host ports.
     expose:
