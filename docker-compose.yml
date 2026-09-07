@@ -1,25 +1,19 @@
-# Dokploy Compose — builds the app from this repo (GitHub source).
-# Does NOT pull from GHCR (avoids: manifests/main: denied).
+# Dokploy Compose — pull prebuilt image from GHCR (built by GitHub Actions).
+# Do NOT build on the VPS (slow / OOM on small Ampere boxes).
 #
-# Dokploy command is typically:
-#   docker compose ... up -d --build --remove-orphans
-# so `build:` + pull_policy: build is required.
+# Image is published by .github/workflows/docker-publish.yml on every push to main.
+# Package should be Public so Dokploy can pull without registry credentials:
+#   GitHub → Packages → realtypinnaclecrm → Package settings → Public
 #
 # Environment tab must include:
 #   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
 # recommended: SESSION_SECRET, APP_URL=https://crm.realtypinnacle.com
 # optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME
-#
-# First deploy after this change can take several minutes (Next.js build on the VPS).
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    # Local tag only — do not use ghcr.io here or compose will try to pull it.
-    image: realty-pinnacle-app:local
-    # never = do not hit a registry (Dokploy still passes --build).
-    pull_policy: never
+    image: ghcr.io/greatidea1/realtypinnaclecrm:main
+    # Always pull the latest :main from GHCR after Actions finishes.
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "3000"

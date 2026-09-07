@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build: Next.js standalone + Prisma migrate at boot.
-# Dokploy builds this on the server (compose pull_policy: build) so GHCR auth is not required.
+# Built in GitHub Actions (multi-arch amd64/arm64), pushed to GHCR;
+# Dokploy must pull only — never build on the VPS.
 
 FROM node:22-alpine AS deps
 WORKDIR /app

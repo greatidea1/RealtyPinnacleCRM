@@ -1,7 +1,9 @@
 # Build Next.js image for amd64 + arm64 and publish a multi-arch manifest to GHCR.
 # Ampere needs linux/arm64; Dokploy's control plane is often linux/amd64.
-# Dokploy on Ampere must pull this image — never build on the 900MB VPS.
-# Package stays private — Dokploy needs a ghcr.io registry credential (PAT read:packages).
+# Dokploy pulls this image — never build on the VPS.
+#
+# CRITICAL: Package must be Public so Dokploy can pull without registry credentials.
+#   One-time: GitHub → Packages → realtypinnaclecrm → Package settings → Public
 name: Docker publish
 
 on:
@@ -18,6 +20,7 @@ env:
   REGISTRY: ghcr.io
   # GHCR requires lowercase; keep in sync with docker-compose.yml image:
   IMAGE_NAME: greatidea1/realtypinnaclecrm
+  PACKAGE_NAME: realtypinnaclecrm
 
 jobs:
   build:
@@ -125,27 +128,44 @@ jobs:
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
 
-      # Public pulls work in Dokploy without registry credentials (avoids "denied").
-      # Skip if the package is already public or the token cannot change visibility.
-      - name: Ensure package is public (Dokploy-friendly)
+      - name: Make package public (required for Dokploy pull without registry login)
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Prefer PAT with package admin if provided; else GITHUB_TOKEN.
+          TOKEN="${{ secrets.GHCR_TOKEN }}"
+          if [ -z "$TOKEN" ]; then TOKEN="$GH_TOKEN"; fi
           OWNER="${{ github.repository_owner }}"
-          PKG="realtypinnaclecrm"
-          # User-owned packages
-          curl -sS -X PUT \
+          PKG="${{ env.PACKAGE_NAME }}"
+          echo "Setting visibility=public for container package ${PKG}…"
+          curl -sS -o /tmp/vis.json -w "%{http_code}" -X PUT \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Authorization: Bearer ${TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/user/packages/container/${PKG}/visibility" \
-            -d '{"visibility":"public"}' || true
-          # Org-owned packages (no-op for user accounts)
+            -d '{"visibility":"public"}' | tee /tmp/vis.code
+          echo
+          cat /tmp/vis.json || true
           curl -sS -X PUT \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Authorization: Bearer ${TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/orgs/${OWNER}/packages/container/${PKG}/visibility" \
             -d '{"visibility":"public"}' || true
+
+      - name: Verify anonymous GHCR pull (Dokploy check)
+        run: |
+          # Unauthenticated manifest fetch — must NOT be 401/403 for public packages.
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "Accept: application/vnd.oci.image.manifest.v1+json" \
+            "https://ghcr.io/v2/${{ env.IMAGE_NAME }}/manifests/main")
+          echo "Anonymous HEAD/GET status for :main => ${CODE}"
+          if [ "$CODE" = "401" ] || [ "$CODE" = "403" ]; then
+            echo "::error::GHCR package is still PRIVATE. Dokploy will fail with 'denied'."
+            echo "::error::Fix once: GitHub → Packages → ${{ env.PACKAGE_NAME }} → Package settings → Change visibility → Public"
+            echo "::error::Then re-run this workflow (or Redeploy Dokploy after visibility is Public)."
+            exit 1
+          fi
+          echo "OK — anonymous access works (status ${CODE}). Dokploy can pull without a registry login."
 # End docker-publish.yml
