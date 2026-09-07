@@ -1,38 +1,26 @@
-# Dokploy Compose (Ampere / arm64): pull prebuilt app from GHCR + Postgres.
-# App image is built by GitHub Actions as linux/arm64 — never build on this VPS.
+# Dokploy Compose — builds the app from this repo (GitHub source).
+# Does NOT pull from GHCR (avoids: manifests/main: denied).
 #
-# ─── If pull fails with: manifests/main: denied ───────────────────────────
-# Fastest fix (recommended): make the GHCR package Public
-#   GitHub → Packages → realtypinnaclecrm → Package settings → Change visibility → Public
-#   Then Redeploy in Dokploy (no registry credentials needed for public pulls).
-#
-# Or keep it Private and fix Dokploy registry auth:
-#   1. Actions → "Docker publish" must be green (image :main exists).
-#   2. Classic PAT: https://github.com/settings/tokens
-#        scopes: read:packages  (+ repo if package is linked to a private repo)
-#   3. Dokploy → (cluster) Registries → Add:
-#        Registry URL:  ghcr.io          (no https://)
-#        Username:      greatidea1       (GitHub USERNAME, not email)
-#        Password:      ghp_… PAT
-#   4. Open THIS Compose application → set/select that Registry on the app
-#        (global registry alone is often ignored by compose pull).
-#   5. Redeploy with pull. Still denied? On the Ampere host SSH test:
-#        echo PAT | docker login ghcr.io -u greatidea1 --password-stdin
-#        docker pull ghcr.io/greatidea1/realtypinnaclecrm:main
-#      If SSH pull fails → PAT/package access. If SSH works → Dokploy registry not attached.
+# Dokploy command is typically:
+#   docker compose ... up -d --build --remove-orphans
+# so `build:` + pull_policy: build is required.
 #
 # Environment tab must include:
 #   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
-# strongly recommended: SESSION_SECRET (long random), APP_URL=https://crm.realtypinnacle.com
+# recommended: SESSION_SECRET, APP_URL=https://crm.realtypinnacle.com
 # optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME
+#
+# First deploy after this change can take several minutes (Next.js build on the VPS).
 services:
   app:
-    image: ghcr.io/greatidea1/realtypinnaclecrm:main
-    # Dokploy compose uses `up --build` without --pull; without this, an old
-    # local :main image is reused forever (e.g. still shows: prisma: not found).
-    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Local tag only — do not use ghcr.io here or compose will try to pull it.
+    image: realty-pinnacle-app:local
+    # never = do not hit a registry (Dokploy still passes --build).
+    pull_policy: never
     restart: unless-stopped
-    # Traefik routes via Domains — do not publish host ports.
     expose:
       - "3000"
     environment:
@@ -41,11 +29,9 @@ services:
       HOSTNAME: "0.0.0.0"
       TZ: Asia/Kolkata
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-realtypinnacle}?schema=public
-      # Pass-through from Dokploy Environment (do NOT use ${VAR:-} empty defaults — they wipe injected values).
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_NAME: ${ADMIN_NAME:-Admin}
-      # Optional — app falls back to ADMIN_PASSWORD if blank.
       SESSION_SECRET: ${SESSION_SECRET:-}
       APP_URL: ${APP_URL:-https://crm.realtypinnacle.com}
     depends_on:
