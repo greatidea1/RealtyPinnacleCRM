@@ -1,20 +1,30 @@
 # Dokploy Compose (Ampere / arm64): pull prebuilt app from GHCR + Postgres.
 # App image is built by GitHub Actions as linux/arm64 — never build on this VPS.
 #
-# GHCR + Dokploy one-time setup:
-#   1. Push to main (or run workflow_dispatch) → Actions "Docker publish" must be green.
-#   2. GitHub → Packages → realtypinnaclecrm → confirm linux/arm64 exists for :main.
-#   3. Create a classic PAT: https://github.com/settings/tokens
-#        scopes: read:packages (add repo if the package is linked to a private repo).
-#   4. Dokploy → Registry: host=ghcr.io, username=<GitHub user>, password=<PAT>.
-#   5. Compose service uses image: below with NO build: block; redeploy = pull + recreate.
-#   6. If "manifests/main: denied": PAT/registry missing or wrong; fix step 3–4, retry.
-#   7. If "no matching manifest for linux/arm64|amd64": wait for multi-arch CI (:main has both).
-#   8. In Dokploy app General, set Server = Ampere (pull arch must match that host).
+# ─── If pull fails with: manifests/main: denied ───────────────────────────
+# Fastest fix (recommended): make the GHCR package Public
+#   GitHub → Packages → realtypinnaclecrm → Package settings → Change visibility → Public
+#   Then Redeploy in Dokploy (no registry credentials needed for public pulls).
+#
+# Or keep it Private and fix Dokploy registry auth:
+#   1. Actions → "Docker publish" must be green (image :main exists).
+#   2. Classic PAT: https://github.com/settings/tokens
+#        scopes: read:packages  (+ repo if package is linked to a private repo)
+#   3. Dokploy → (cluster) Registries → Add:
+#        Registry URL:  ghcr.io          (no https://)
+#        Username:      greatidea1       (GitHub USERNAME, not email)
+#        Password:      ghp_… PAT
+#   4. Open THIS Compose application → set/select that Registry on the app
+#        (global registry alone is often ignored by compose pull).
+#   5. Redeploy with pull. Still denied? On the Ampere host SSH test:
+#        echo PAT | docker login ghcr.io -u greatidea1 --password-stdin
+#        docker pull ghcr.io/greatidea1/realtypinnaclecrm:main
+#      If SSH pull fails → PAT/package access. If SSH works → Dokploy registry not attached.
 #
 # Environment tab must include:
-#   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, SESSION_SECRET
-# optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME, APP_URL
+#   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
+# strongly recommended: SESSION_SECRET (long random), APP_URL=https://crm.realtypinnacle.com
+# optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME
 services:
   app:
     image: ghcr.io/greatidea1/realtypinnaclecrm:main
@@ -35,8 +45,9 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_NAME: ${ADMIN_NAME:-Admin}
-      SESSION_SECRET: ${SESSION_SECRET}
-      APP_URL: ${APP_URL:-}
+      # Optional — app falls back to ADMIN_PASSWORD if blank.
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      APP_URL: ${APP_URL:-https://crm.realtypinnacle.com}
     depends_on:
       db:
         condition: service_healthy
