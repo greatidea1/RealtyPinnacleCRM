@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { assignedScope, requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -50,14 +51,14 @@ function buildYearlySales(
  */
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const role = searchParams.get('role');
     const yearParam = parseInt(searchParams.get('year') || String(new Date().getFullYear()), 10);
     const year = Number.isFinite(yearParam) ? yearParam : new Date().getFullYear();
 
-    const where: Record<string, unknown> = { stage: 'Closed' };
-    if (role !== 'ADMIN' && userId) where.assignedToId = userId;
+    const where: Record<string, unknown> = { stage: 'Closed', ...assignedScope(auth.user) };
 
     const closedDeals = await db.deal.findMany({
       where,

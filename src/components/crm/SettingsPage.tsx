@@ -24,7 +24,7 @@ export function SettingsPage() {
   useEffect(() => {
     if (user?.role === 'ADMIN') {
       setLoadingUsers(true);
-      fetch(`/api/users?adminId=${user.id}`)
+      fetch('/api/users')
         .then(r => r.json())
         .then(d => { setUsers(d.users || []); setLoadingUsers(false); })
         .catch(() => setLoadingUsers(false));
@@ -51,7 +51,7 @@ export function SettingsPage() {
           loading={loadingUsers}
           onRefresh={() => {
             setLoadingUsers(true);
-            fetch(`/api/users?adminId=${user!.id}`)
+            fetch('/api/users')
               .then(r => r.json())
               .then(d => { setUsers(d.users || []); setLoadingUsers(false); })
               .catch(() => setLoadingUsers(false));
@@ -64,6 +64,7 @@ export function SettingsPage() {
 
 /* Profile */
 function ProfileSection({ user }: { user: any }) {
+  const login = useAppStore((s) => s.login);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -77,12 +78,13 @@ function ProfileSection({ user }: { user: any }) {
   const handleSave = async () => {
     try {
       const res = await fetch('/api/auth', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update-profile', userId: user.id, ...form }),
+        body: JSON.stringify({ action: 'update-profile', name: form.name, phone: form.phone }),
       });
       const data = await res.json();
       if (data.error) { setMsg({ type: 'error', text: data.error }); return; }
+      if (data.user) login(data.user);
       setMsg({ type: 'success', text: 'Profile updated successfully' });
       setEditing(false);
     } catch {
@@ -200,9 +202,9 @@ function ChangePasswordSection({ user }: { user: any }) {
     setLoading(true);
     try {
       const res = await fetch('/api/auth', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'change-password', userId: user.id, currentPassword: form.current, newPassword: form.newPw }),
+        body: JSON.stringify({ action: 'change-password', currentPassword: form.current, newPassword: form.newPw }),
       });
       const data = await res.json();
       if (data.error) { setMsg({ type: 'error', text: data.error }); return; }
@@ -285,7 +287,6 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          adminId: user?.id,
           name: addForm.name,
           email: addForm.email,
           role: addForm.role,
@@ -295,9 +296,9 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
       });
       const data = await res.json();
       if (data.error) { setAddMsg(data.error); setCreatedPassword(''); return; }
-      const temp = data.temporaryPassword || 'Welcome@123';
+      const temp = data.temporaryPassword || '';
       setCreatedPassword(temp);
-      setAddMsg(`Invite created for ${data.user.email}. Share the temporary password below.`);
+      setAddMsg(`Invite created for ${data.user.email}. Share the temporary password below (shown once).`);
       setAddForm({ name: '', email: '', role: 'AGENT', phone: '', password: '' });
       onRefresh();
     } catch { setAddMsg('Failed to invite user'); setCreatedPassword(''); }
@@ -308,7 +309,7 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
       await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user?.id, userId: u.id, isActive: !u.isActive }),
+        body: JSON.stringify({ userId: u.id, isActive: !u.isActive }),
       });
       onRefresh();
     } catch {}
@@ -319,11 +320,37 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
       await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user?.id, userId: u.id, role }),
+        body: JSON.stringify({ userId: u.id, role }),
       });
       onRefresh();
     } catch {}
   };
+
+  /** Generates a new temporary password for the selected user. */
+  const resetUserPassword = async (u: UserType) => {
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset-password', userId: u.id }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setAddMsg(data.error);
+        setCreatedPassword('');
+        setShowAdd(true);
+        return;
+      }
+      setCreatedPassword(data.temporaryPassword || '');
+      setAddMsg(`New temporary password for ${u.email} (share once, then close):`);
+      setShowAdd(true);
+    } catch {
+      setAddMsg('Failed to reset password');
+      setCreatedPassword('');
+      setShowAdd(true);
+    }
+  };
+  // End resetUserPassword
 
   return (
     <div className="glass-card rounded-2xl p-6">
@@ -393,10 +420,10 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
               <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Temporary password (optional)</Label>
               <input type="text" value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })}
                 className="w-full px-3 py-2.5 rounded-xl bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-cyan-500/50 transition-colors"
-                placeholder="Defaults to Welcome@123" />
+                placeholder="Leave blank to auto-generate a strong password" />
             </div>
             <p className="text-xs text-muted-foreground bg-muted p-2.5 rounded-lg border border-border">
-              Share the email and temporary password with the invitee. They should change it after first login.
+              Share the email and temporary password with the invitee. They should change it after first login (Settings → Change Password) or use Forgot password.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-foreground/80 bg-muted border border-border hover:bg-accent transition-colors">Close</button>
@@ -477,17 +504,25 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
                   </td>
                   <td className="px-4 py-3 text-right">
                     {u.id !== user?.id && (
-                      <button
-                        onClick={() => toggleActive(u)}
-                        className={cn(
-                          'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
-                          u.isActive
-                            ? 'text-rose-400 hover:bg-rose-500/10'
-                            : 'text-emerald-400 hover:bg-emerald-500/10'
-                        )}
-                      >
-                        {u.isActive ? 'Deactivate' : 'Reactivate'}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => resetUserPassword(u)}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+                        >
+                          Reset PW
+                        </button>
+                        <button
+                          onClick={() => toggleActive(u)}
+                          className={cn(
+                            'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
+                            u.isActive
+                              ? 'text-rose-400 hover:bg-rose-500/10'
+                              : 'text-emerald-400 hover:bg-emerald-500/10'
+                          )}
+                        >
+                          {u.isActive ? 'Deactivate' : 'Reactivate'}
+                        </button>
+                      </div>
                     )}
                   </td>
                 </motion.tr>

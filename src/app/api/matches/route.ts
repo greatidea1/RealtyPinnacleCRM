@@ -1,13 +1,8 @@
 import { db } from '@/lib/db';
+import { assignedScope, requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { findMatchingClients, findMatchingProperties } from '@/lib/matching';
 import type { Client, Property } from '@/lib/types';
-
-/** Builds role-scoped Prisma where clause for assigned records. */
-function scopeByRole(role: string | null, userId: string | null) {
-  if (role !== 'ADMIN' && userId) return { assignedToId: userId };
-  return {};
-} // end scopeByRole
 
 /**
  * GET /api/matches
@@ -18,9 +13,10 @@ function scopeByRole(role: string | null, userId: string | null) {
  */
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const role = searchParams.get('role');
     const direction = searchParams.get('direction');
     const id = searchParams.get('id');
     const search = (searchParams.get('search') || '').trim();
@@ -33,7 +29,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'direction and id are required' }, { status: 400 });
     }
 
-    const scope = scopeByRole(role, userId);
+    const scope = assignedScope(auth.user);
 
     if (direction === 'for-client') {
       const client = await db.client.findFirst({

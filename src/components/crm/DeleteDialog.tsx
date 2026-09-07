@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Loader2, Trash2, AlertTriangle } from 'lucide-react';
 
 export function DeleteDialog() {
-  const { user, showDeleteDialog, deleteTarget, closeDeleteDialog } = useAppStore();
+  const { user, showDeleteDialog, deleteTarget, closeDeleteDialog, bumpDataVersion } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,11 +22,12 @@ export function DeleteDialog() {
         task: '/api/tasks',
       };
       const endpoint = typeMap[deleteTarget.type] || `/api/${deleteTarget.type}s`;
-      const res = await fetch(`${endpoint}?id=${deleteTarget.id}&userId=${user.id}`, {
+      const res = await fetch(`${endpoint}?id=${deleteTarget.id}`, {
         method: 'DELETE',
       });
       const data = await res.json();
       if (data.error) { setError(data.error); return; }
+      bumpDataVersion();
       closeDeleteDialog();
     } catch {
       setError('Failed to delete. Please try again.');

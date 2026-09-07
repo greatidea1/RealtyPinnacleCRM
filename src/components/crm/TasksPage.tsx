@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 type FilterTab = 'all' | 'today' | 'upcoming' | 'completed';
 
 export function TasksPage() {
-  const { user, openTaskForm, openDeleteDialog } = useAppStore();
+  const { user, openTaskForm, openDeleteDialog, dataVersion } = useAppStore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>('all');
@@ -28,12 +28,12 @@ export function TasksPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/tasks?userId=${user.id}&role=${user.role}&filter=${filter}`);
+      const res = await fetch(`/api/tasks?filter=${filter}`);
       const data = await res.json();
       setTasks(data.tasks || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [user, filter]);
+  }, [user, filter, dataVersion]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
@@ -43,7 +43,7 @@ export function TasksPage() {
       await fetch('/api/tasks', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: task.id, userId: user?.id, isCompleted: !task.isCompleted }),
+        body: JSON.stringify({ id: task.id, isCompleted: !task.isCompleted }),
       });
     } catch {}
   };
@@ -207,7 +207,7 @@ export function TasksPage() {
 
 /* Task Form Modal */
 export function TaskForm() {
-  const { user, showTaskForm, editingTask, closeTaskForm } = useAppStore();
+  const { user, showTaskForm, editingTask, closeTaskForm, bumpDataVersion } = useAppStore();
   const [form, setForm] = useState({
     title: '', description: '', dueDate: '', priority: 'Medium' as TaskPriority,
     propertyId: '', clientId: '',
@@ -228,9 +228,9 @@ export function TaskForm() {
         clientId: editingTask?.clientId || '',
       });
       setError('');
-      fetch(`/api/properties?userId=${user?.id}&role=${user?.role}&limit=100`)
+      fetch(`/api/properties?limit=100`)
         .then(r => r.json()).then(d => setProperties(d.properties || [])).catch(() => {});
-      fetch(`/api/clients?userId=${user?.id}&role=${user?.role}&limit=100`)
+      fetch(`/api/clients?limit=100`)
         .then(r => r.json()).then(d => setClients(d.clients || [])).catch(() => {});
     }
   }, [showTaskForm, editingTask, user]);
@@ -254,6 +254,7 @@ export function TaskForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      bumpDataVersion();
       closeTaskForm();
     } catch {
       setError('Failed to save task');

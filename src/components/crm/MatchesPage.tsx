@@ -115,7 +115,7 @@ function PaginationBar({
 
 /** Clients tab: pick a client to auto-find matching properties. */
 function ClientsMatchTab() {
-  const { user, navigate } = useAppStore();
+  const { user, navigate, dataVersion } = useAppStore();
   const [clients, setClients] = useState<Client[]>([]);
   const [listTotal, setListTotal] = useState(0);
   const [listPage, setListPage] = useState(1);
@@ -138,8 +138,6 @@ function ClientsMatchTab() {
     setListLoading(true);
     try {
       const params = new URLSearchParams({
-        userId: user.id,
-        role: user.role,
         page: String(listPage),
         limit: String(LIST_PAGE_SIZE),
       });
@@ -153,7 +151,7 @@ function ClientsMatchTab() {
     } finally {
       setListLoading(false);
     }
-  }, [user, search, listPage]);
+  }, [user, search, listPage, dataVersion]);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
 
@@ -168,8 +166,6 @@ function ClientsMatchTab() {
       const params = new URLSearchParams({
         direction: 'for-client',
         id: selectedClient.id,
-        userId: user.id,
-        role: user.role,
         page: String(matchPage),
         limit: String(PAGE_SIZE),
         minScore: String(minScore),
@@ -185,7 +181,7 @@ function ClientsMatchTab() {
     } finally {
       setMatchLoading(false);
     }
-  }, [user, selectedClient, matchPage, minScore, typeFilter, resultSearch]);
+  }, [user, selectedClient, matchPage, minScore, typeFilter, resultSearch, dataVersion]);
 
   useEffect(() => { fetchMatches(); }, [fetchMatches]);
 
@@ -440,7 +436,7 @@ function ClientsMatchTab() {
 
 /** Properties tab: pick a property to auto-find matching clients. */
 function PropertiesMatchTab() {
-  const { user, navigate } = useAppStore();
+  const { user, navigate, dataVersion } = useAppStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [listTotal, setListTotal] = useState(0);
   const [listPage, setListPage] = useState(1);
@@ -463,8 +459,6 @@ function PropertiesMatchTab() {
     setListLoading(true);
     try {
       const params = new URLSearchParams({
-        userId: user.id,
-        role: user.role,
         page: String(listPage),
         limit: String(LIST_PAGE_SIZE),
       });
@@ -478,7 +472,7 @@ function PropertiesMatchTab() {
     } finally {
       setListLoading(false);
     }
-  }, [user, search, listPage]);
+  }, [user, search, listPage, dataVersion]);
 
   useEffect(() => { fetchProperties(); }, [fetchProperties]);
 
@@ -493,8 +487,6 @@ function PropertiesMatchTab() {
       const params = new URLSearchParams({
         direction: 'for-property',
         id: selectedProperty.id,
-        userId: user.id,
-        role: user.role,
         page: String(matchPage),
         limit: String(PAGE_SIZE),
         minScore: String(minScore),
@@ -510,7 +502,7 @@ function PropertiesMatchTab() {
     } finally {
       setMatchLoading(false);
     }
-  }, [user, selectedProperty, matchPage, minScore, typeFilter, resultSearch]);
+  }, [user, selectedProperty, matchPage, minScore, typeFilter, resultSearch, dataVersion]);
 
   useEffect(() => { fetchMatches(); }, [fetchMatches]);
 

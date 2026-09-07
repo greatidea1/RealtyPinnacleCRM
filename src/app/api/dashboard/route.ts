@@ -1,14 +1,14 @@
 import { db } from '@/lib/db';
+import { assignedScope, requireAuth } from '@/lib/auth-guard';
 import { endOfTodayIST, startOfTodayIST } from '@/lib/datetime';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId') || '';
-    const role = searchParams.get('role') || 'AGENT';
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
 
-    const agentWhere = role !== 'ADMIN' ? { assignedToId: userId } : {};
+    const agentWhere = assignedScope(auth.user);
     const dayStart = startOfTodayIST();
     const dayEnd = endOfTodayIST();
 
@@ -36,10 +36,7 @@ export async function GET(req: NextRequest) {
         where: {
           ...agentWhere,
           isCompleted: false,
-          dueDate: {
-            gte: dayStart,
-            lte: dayEnd,
-          },
+          dueDate: { gte: dayStart, lte: dayEnd },
         },
       }),
       db.task.count({
@@ -59,7 +56,9 @@ export async function GET(req: NextRequest) {
       tasksDueToday,
       overdueTasks,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End GET

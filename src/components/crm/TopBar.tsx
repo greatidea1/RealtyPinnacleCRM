@@ -33,7 +33,7 @@ export function TopBar() {
     if (!searchQuery.trim()) return;
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&userId=${user?.id}&role=${user?.role}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
         const data = await res.json();
         setSearchResults(data);
       } catch {}
@@ -46,7 +46,7 @@ export function TopBar() {
     const ctrl = new AbortController();
     (async () => {
       try {
-        const res = await fetch(`/api/notifications?userId=${user.id}`, { signal: ctrl.signal });
+        const res = await fetch('/api/notifications', { signal: ctrl.signal });
         const data = await res.json();
         if (!ctrl.signal.aborted) {
           setNotifications(data.notifications || []);
@@ -70,16 +70,16 @@ export function TopBar() {
   }, []);
 
   const markRead = async (id: string) => {
-    await fetch('/api/notifications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, action: 'mark-read', notificationId: id }) });
-    const res = await fetch(`/api/notifications?userId=${user?.id}`);
+    await fetch('/api/notifications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark-read', notificationId: id }) });
+    const res = await fetch('/api/notifications');
     const data = await res.json();
     setNotifications(data.notifications || []);
     setUnreadCount(data.unreadCount || 0);
   };
 
   const markAllRead = async () => {
-    await fetch('/api/notifications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, action: 'mark-all-read' }) });
-    const res = await fetch(`/api/notifications?userId=${user?.id}`);
+    await fetch('/api/notifications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark-all-read' }) });
+    const res = await fetch('/api/notifications');
     const data = await res.json();
     setNotifications(data.notifications || []);
     setUnreadCount(data.unreadCount || 0);

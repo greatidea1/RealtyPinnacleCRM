@@ -1,16 +1,17 @@
 import { db } from '@/lib/db';
+import { assignedScope, requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q') || '';
-    const userId = searchParams.get('userId') || '';
-    const role = searchParams.get('role') || 'AGENT';
-
     if (!q.trim()) return NextResponse.json({ properties: [], clients: [] });
 
-    const agentWhere = role !== 'ADMIN' ? { assignedToId: userId } : {};
+    const agentWhere = assignedScope(auth.user);
 
     const [properties, clients] = await Promise.all([
       db.property.findMany({
@@ -42,7 +43,9 @@ export async function GET(req: NextRequest) {
     ]);
 
     return NextResponse.json({ properties, clients });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End GET

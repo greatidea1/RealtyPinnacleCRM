@@ -34,7 +34,7 @@ const STEP_TITLES = ['Basic Info', 'Location', 'Pricing & Details', 'Amenities',
 /* ─── Properties List ───────────────────────────────────────────────────── */
 
 export function PropertiesListPage() {
-  const { user, navigate, openPropertyForm, openDeleteDialog } = useAppStore();
+  const { user, navigate, openPropertyForm, openDeleteDialog, dataVersion } = useAppStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export function PropertiesListPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ userId: user.id, role: user.role, page: String(page), limit: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
       if (statusFilter) params.set('status', statusFilter);
       if (typeFilter) params.set('type', typeFilter);
       if (search) params.set('search', search);
@@ -58,9 +58,9 @@ export function PropertiesListPage() {
       const data = await res.json();
       setProperties(data.properties || []);
       setTotal(data.total || 0);
-      setStatusCounts(data.statusCounts || {});
+      setStatusCounts(data.counts || data.statusCounts || {});
     } catch {} finally { setLoading(false); }
-  }, [user, statusFilter, typeFilter, search, page]);
+  }, [user, statusFilter, typeFilter, search, page, dataVersion]);
 
   useEffect(() => { fetchProps(); }, [fetchProps]);
   const handleSearch = () => { setPage(1); setSearch(searchInput); };
@@ -364,7 +364,7 @@ function StaticMap({ lat, lng }: { lat: number; lng: number }) {
 /* ─── Property Form ──────────────────────────────────────────────────────── */
 
 export function PropertyForm() {
-  const { user, showPropertyForm, editingProperty, closePropertyForm } = useAppStore();
+  const { user, showPropertyForm, editingProperty, closePropertyForm, bumpDataVersion } = useAppStore();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     title: '', propertyType: 'Apartment' as PropertyType, bedrooms: '', bathrooms: '',
@@ -478,6 +478,7 @@ export function PropertyForm() {
       };
       if (editingProperty) payload.id = editingProperty.id;
       await fetch('/api/properties', { method: editingProperty ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      bumpDataVersion();
       closePropertyForm();
     } catch { setError('Failed to save property'); }
     finally { setLoading(false); }

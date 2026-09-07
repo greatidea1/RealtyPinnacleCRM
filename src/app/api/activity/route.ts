@@ -1,21 +1,26 @@
 import { db } from '@/lib/db';
+import { requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId') || '';
-    const role = searchParams.get('role') || 'AGENT';
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+
+    const where =
+      auth.user.role === 'ADMIN' ? {} : { userId: auth.user.id };
 
     const activities = await db.activity.findMany({
-      where: role === 'ADMIN' ? {} : { userId },
+      where,
       include: { user: { select: { id: true, name: true, avatar: true } } },
       orderBy: { createdAt: 'desc' },
       take: 30,
     });
 
     return NextResponse.json({ activities });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End GET

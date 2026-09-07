@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { requireAdminAuth, requireAuth } from '@/lib/auth-guard';
 import {
   buildLocationCsv,
   findOrCreateCity,
@@ -9,38 +10,20 @@ import {
 } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
-/** Resolves admin id from query params or JSON body. */
-function getAdminId(source: { get?: (k: string) => string | null } | Record<string, unknown>): string | null {
-  if (typeof (source as URLSearchParams).get === 'function') {
-    const sp = source as URLSearchParams;
-    return sp.get('adminId') || sp.get('userId');
-  }
-  const body = source as Record<string, unknown>;
-  const id = body.adminId || body.userId;
-  return typeof id === 'string' ? id : null;
-}
-// End getAdminId
-
-/** Ensures the requester is an active ADMIN. */
-async function requireAdmin(adminId: string | null) {
-  if (!adminId) return null;
-  const admin = await db.user.findUnique({ where: { id: adminId } });
-  if (!admin || admin.role !== 'ADMIN' || !admin.isActive) return null;
-  return admin;
-}
-// End requireAdmin
-
 /** Lists cities, localities, or export CSV. Available to all authenticated users for reads. */
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action') || 'list';
     const search = (searchParams.get('search') || '').trim();
     const cityId = searchParams.get('cityId');
 
     if (action === 'export') {
-      const admin = await requireAdmin(getAdminId(searchParams));
-      if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      const adminAuth = await requireAdminAuth(req);
+      if ('error' in adminAuth) return adminAuth.error;
 
       const localities = await db.locality.findMany({
         include: { city: true },
@@ -133,6 +116,9 @@ export async function GET(req: NextRequest) {
 /** Creates cities/localities, imports CSV, merges duplicates, or seeds from existing data. */
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+
     const body = await req.json();
     const action = body.action || 'create';
 
@@ -172,8 +158,8 @@ export async function POST(req: NextRequest) {
       }, { status: 201 });
     }
 
-    const admin = await requireAdmin(getAdminId(body));
-    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminAuth = await requireAdminAuth(req);
+    if ('error' in adminAuth) return adminAuth.error;
 
     if (action === 'import') {
       if (typeof body.csv !== 'string') {
@@ -290,10 +276,10 @@ export async function POST(req: NextRequest) {
 /** Updates a locality or city name (admin-only). */
 export async function PUT(req: NextRequest) {
   try {
-    const body = await req.json();
-    const admin = await requireAdmin(getAdminId(body));
-    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminAuth = await requireAdminAuth(req);
+    if ('error' in adminAuth) return adminAuth.error;
 
+    const body = await req.json();
     const entity = body.entity || 'locality';
 
     if (entity === 'city') {
@@ -382,10 +368,10 @@ export async function PUT(req: NextRequest) {
 /** Deletes a locality or empty city (admin-only). Blocks delete when still referenced. */
 export async function DELETE(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const admin = await requireAdmin(getAdminId(searchParams));
-    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminAuth = await requireAdminAuth(req);
+    if ('error' in adminAuth) return adminAuth.error;
 
+    const { searchParams } = new URL(req.url);
     const entity = searchParams.get('entity') || 'locality';
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });

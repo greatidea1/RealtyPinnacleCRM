@@ -32,7 +32,7 @@ const TYPE_COLORS: Record<ClientType, string> = {
 const PAGE_SIZE = 10;
 
 export function ClientsPage() {
-  const { user, navigate, openClientForm, openDeleteDialog } = useAppStore();
+  const { user, navigate, openClientForm, openDeleteDialog, dataVersion } = useAppStore();
   const [clients, setClients] = useState<Client[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export function ClientsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ userId: user.id, role: user.role, page: String(page), limit: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
       if (search) params.set('search', search);
       if (typeFilter !== 'All') params.set('type', typeFilter);
       const res = await fetch(`/api/clients?${params}`);
@@ -55,7 +55,7 @@ export function ClientsPage() {
       setTotal(data.total || 0);
     } catch (err) { console.error('Failed to fetch clients', err); }
     finally { setLoading(false); }
-  }, [user, search, typeFilter, sort, page]);
+  }, [user, search, typeFilter, sort, page, dataVersion]);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
 

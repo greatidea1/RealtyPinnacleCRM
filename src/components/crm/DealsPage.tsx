@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 
 export function DealsPage() {
-  const { user, navigate, openDealForm, openDeleteDialog } = useAppStore();
+  const { user, navigate, openDealForm, openDeleteDialog, dataVersion } = useAppStore();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [pipelineStats, setPipelineStats] = useState<Record<string, { count: number; value: number }>>({});
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
@@ -24,7 +24,7 @@ export function DealsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/deals?userId=${user?.id}&role=${user?.role}`);
+      const res = await fetch('/api/deals');
       const data = await res.json();
       setDeals(data.deals || []);
       const stats: Record<string, { count: number; value: number }> = {};
@@ -32,14 +32,14 @@ export function DealsPage() {
       (data.pipelineStats || []).forEach((s: any) => { stats[s.stage] = { count: s._count.stage, value: s._sum.dealValue || 0 }; });
       setPipelineStats(stats);
     } catch {} finally { setLoading(false); }
-  }, [user]);
+  }, [user, dataVersion]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleStageChange = async (dealId: string, newStage: string) => {
     setDeals(deals.map(d => d.id === dealId ? { ...d, stage: newStage as any } : d));
     try {
-      await fetch('/api/deals', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: dealId, userId: user?.id, stage: newStage }) });
+      await fetch('/api/deals', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: dealId, stage: newStage }) });
       fetchData();
     } catch {}
   };
@@ -221,7 +221,7 @@ export function DealDetail() {
 
 /* Deal Form */
 export function DealForm() {
-  const { user, showDealForm, editingDeal, closeDealForm } = useAppStore();
+  const { user, showDealForm, editingDeal, closeDealForm, bumpDataVersion } = useAppStore();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ propertyId: '', clientId: '', stage: 'Lead', dealValue: '', expectedCloseDate: '', notes: '' });
   const [properties, setProperties] = useState<any[]>([]);
@@ -238,8 +238,8 @@ export function DealForm() {
       } else {
         setForm({ propertyId: '', clientId: '', stage: 'Lead', dealValue: '', expectedCloseDate: '', notes: '' });
       }
-      fetch(`/api/properties?userId=${user?.id}&role=${user?.role}&limit=100`).then(r => r.json()).then(d => setProperties(d.properties || [])).catch(() => {});
-      fetch(`/api/clients?userId=${user?.id}&role=${user?.role}&limit=100`).then(r => r.json()).then(d => setClients(d.clients || [])).catch(() => {});
+      fetch(`/api/properties?limit=100`).then(r => r.json()).then(d => setProperties(d.properties || [])).catch(() => {});
+      fetch(`/api/clients?limit=100`).then(r => r.json()).then(d => setClients(d.clients || [])).catch(() => {});
     }
   }, [showDealForm, editingDeal, user]);
 
@@ -247,9 +247,10 @@ export function DealForm() {
     if (!form.propertyId || !form.clientId || !form.dealValue) return;
     setLoading(true);
     try {
-      const payload: any = { userId: user?.id, propertyId: form.propertyId, clientId: form.clientId, stage: form.stage, dealValue: parseFloat(form.dealValue), expectedCloseDate: form.expectedCloseDate || null, notes: form.notes || null };
+      const payload: any = { propertyId: form.propertyId, clientId: form.clientId, stage: form.stage, dealValue: parseFloat(form.dealValue), expectedCloseDate: form.expectedCloseDate || null, notes: form.notes || null };
       if (editingDeal) payload.id = editingDeal.id;
       await fetch('/api/deals', { method: editingDeal ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      bumpDataVersion();
       closeDealForm();
     } catch {} finally { setLoading(false); }
   };

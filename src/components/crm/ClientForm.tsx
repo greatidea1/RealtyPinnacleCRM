@@ -78,7 +78,7 @@ function validateStep(step: number, data: FormData): string | null {
 }
 
 export function ClientForm() {
-  const { user, showClientForm, editingClient, closeClientForm } = useAppStore();
+  const { user, showClientForm, editingClient, closeClientForm, bumpDataVersion } = useAppStore();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<string | null>(null);
@@ -189,6 +189,7 @@ export function ClientForm() {
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
       if (!res.ok) { const data = await res.json(); setErrors(data.error || 'Something went wrong.'); return; }
+      bumpDataVersion();
       closeClientForm();
     } catch { setErrors('Failed to save client.'); }
     finally { setSubmitting(false); }

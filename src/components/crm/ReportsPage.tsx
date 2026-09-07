@@ -74,7 +74,7 @@ function formatSalesLakhs(value: number): string {
 
 /** Sales & completed-deals reports with monthly and yearly breakdowns. */
 export function ReportsPage() {
-  const { user, navigate } = useAppStore();
+  const { user, navigate, dataVersion } = useAppStore();
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<ReportSummary | null>(null);
@@ -87,11 +87,7 @@ export function ReportsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        userId: user.id,
-        role: user.role,
-        year: String(year),
-      });
+      const params = new URLSearchParams({ year: String(year) });
       const res = await fetch(`/api/reports?${params}`);
       const data = await res.json();
       setSummary(data.summary || null);
@@ -104,7 +100,7 @@ export function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, year]);
+  }, [user, year, dataVersion]);
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
 

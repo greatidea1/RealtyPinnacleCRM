@@ -20,7 +20,7 @@ const activityIcons: Record<string, string> = {
 };
 
 export function DashboardPage() {
-  const { user, navigate, openPropertyForm, openClientForm } = useAppStore();
+  const { user, navigate, openPropertyForm, openClientForm, dataVersion } = useAppStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -32,10 +32,10 @@ export function DashboardPage() {
     const fetchData = async () => {
       try {
         const [statsRes, actRes, taskRes, dealRes] = await Promise.all([
-          fetch(`/api/dashboard?userId=${user.id}&role=${user.role}`),
-          fetch(`/api/activity?userId=${user.id}&role=${user.role}`),
-          fetch(`/api/tasks?userId=${user.id}&role=${user.role}&filter=all`),
-          fetch(`/api/deals?userId=${user.id}&role=${user.role}`),
+          fetch('/api/dashboard'),
+          fetch('/api/activity'),
+          fetch('/api/tasks?filter=all'),
+          fetch('/api/deals'),
         ]);
         const [statsData, actData, taskData, dealData] = await Promise.all([
           statsRes.json(), actRes.json(), taskRes.json(), dealRes.json(),
@@ -53,14 +53,14 @@ export function DashboardPage() {
       finally { setLoading(false); }
     };
     fetchData();
-  }, [user]);
+  }, [user, dataVersion]);
 
   const toggleTask = async (task: Task) => {
     const updated = { ...task, isCompleted: !task.isCompleted };
     setTasks(tasks.map(t => t.id === task.id ? updated : t));
     await fetch('/api/tasks', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: task.id, userId: user?.id, isCompleted: !task.isCompleted }),
+      body: JSON.stringify({ id: task.id, isCompleted: !task.isCompleted }),
     });
     if (stats) setStats({ ...stats, tasksDueToday: Math.max(0, stats.tasksDueToday - (task.isCompleted ? 0 : 1)) });
   };

@@ -24,6 +24,21 @@ const navItems = [
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { currentPage, navigate, logout, user, toggleSidebar } = useAppStore();
 
+  /** Clears server session cookie then local auth state. */
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout' }),
+      });
+    } catch {
+      // ignore network errors on logout
+    }
+    logout();
+  };
+  // End handleLogout
+
   return (
     <>
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border flex-shrink-0">
@@ -86,7 +101,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
             </div>
             <button
               type="button"
-              onClick={logout}
+              onClick={handleLogout}
               className="min-h-10 min-w-10 flex items-center justify-center text-muted-foreground hover:text-rose-400 transition-colors"
               title="Sign out"
             >

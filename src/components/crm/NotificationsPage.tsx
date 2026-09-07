@@ -21,7 +21,7 @@ const typeFilters: { key: string; label: string; types: NotificationType[] }[] =
 ];
 
 export function NotificationsPage() {
-  const { user, navigate } = useAppStore();
+  const { user, navigate, dataVersion } = useAppStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('all');
@@ -30,13 +30,13 @@ export function NotificationsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/notifications?userId=${user.id}`);
+      const res = await fetch('/api/notifications');
       const data = await res.json();
       setNotifications(data.notifications || []);
     } catch {} finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchNotifs(); }, [user]);
+  useEffect(() => { fetchNotifs(); }, [user, dataVersion]);
 
   const markRead = async (notif: Notification) => {
     if (notif.isRead) return;

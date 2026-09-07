@@ -1,10 +1,13 @@
 import { db } from '@/lib/db';
+import { assignedScope, canAccessAssigned, requireAuth } from '@/lib/auth-guard';
 import { resolveCityAndLocality } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
+/** Writes an activity log row for the given user/entity. */
 async function logActivity(userId: string, entityType: string, entityId: string, action: string, description: string) {
   await db.activity.create({ data: { userId, entityType, entityId, action, description } });
 }
+// End logActivity
 
 /** Resolves property city/locality against Location Master and syncs denormalized names. */
 async function preparePropertyData(raw: Record<string, unknown>) {
@@ -26,19 +29,22 @@ async function preparePropertyData(raw: Record<string, unknown>) {
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const role = searchParams.get('role');
     const status = searchParams.get('status');
     const type = searchParams.get('type');
     const search = searchParams.get('search');
     const id = searchParams.get('id');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const scope = assignedScope(user);
 
     if (id) {
-      const property = await db.property.findUnique({
-        where: { id },
+      const property = await db.property.findFirst({
+        where: { id, ...scope },
         include: {
           amenities: true,
           photos: true,
@@ -50,8 +56,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ property });
     }
 
-    const where: any = {};
-    if (role !== 'ADMIN' && userId) where.assignedToId = userId;
+    const where: Record<string, unknown> = { ...scope };
     if (status && status !== 'All') where.status = status;
     if (type) where.propertyType = type;
     if (search) {
@@ -77,7 +82,7 @@ export async function GET(req: NextRequest) {
       db.property.count({ where }),
       db.property.groupBy({
         by: ['status'],
-        where: role !== 'ADMIN' && userId ? { assignedToId: userId } : undefined,
+        where: scope,
         _count: { status: true },
       }),
     ]);
@@ -89,15 +94,21 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ properties, total, counts, page, limit });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End GET
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const body = await req.json();
-    const { userId, amenities, newPhotos, _count, assignedTo, photos, ...data } = body;
+    const { amenities, newPhotos, _count, assignedTo, photos, userId: _clientUserId, ...data } = body;
     let prepared: Record<string, unknown>;
     try {
       prepared = await preparePropertyData(data);
@@ -106,10 +117,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
+    // Agents can only assign to themselves; admins may reassign.
+    let assignedToId = user.id;
+    if (user.role === 'ADMIN' && typeof prepared.assignedToId === 'string' && prepared.assignedToId) {
+      assignedToId = prepared.assignedToId;
+    }
+
     const property = await db.property.create({
       data: {
         ...(prepared as object),
-        assignedToId: (prepared.assignedToId as string) || userId,
+        assignedToId,
       } as Parameters<typeof db.property.create>[0]['data'],
     });
 
@@ -125,10 +142,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    await logActivity(userId, 'Property', property.id, 'created', `Added new listing: ${property.title}`);
+    await logActivity(user.id, 'Property', property.id, 'created', `Added new listing: ${property.title}`);
     await db.notification.create({
       data: {
-        userId,
+        userId: user.id,
         type: 'system',
         title: 'Property Listed',
         description: `Your listing "${property.title}" has been created`,
@@ -137,18 +154,27 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ property }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End POST
 
 export async function PUT(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const body = await req.json();
-    const { id, userId, amenities, _count, assignedTo, photos, newPhotos, ...data } = body;
+    const { id, amenities, _count, assignedTo, photos, newPhotos, userId: _clientUserId, ...data } = body;
 
     const existing = await db.property.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!canAccessAssigned(user, existing.assignedToId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     let prepared: Record<string, unknown>;
     try {
@@ -157,6 +183,12 @@ export async function PUT(req: NextRequest) {
       const message = err instanceof Error ? err.message : 'Invalid location';
       return NextResponse.json({ error: message }, { status: 400 });
     }
+
+    // Non-admins cannot reassign ownership.
+    if (user.role !== 'ADMIN') {
+      prepared.assignedToId = existing.assignedToId;
+    }
+
     const property = await db.property.update({
       where: { id },
       data: prepared as Parameters<typeof db.property.update>[0]['data'],
@@ -177,29 +209,38 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    await logActivity(userId, 'Property', id, 'updated', `Updated listing: ${property.title}`);
+    await logActivity(user.id, 'Property', id, 'updated', `Updated listing: ${property.title}`);
     return NextResponse.json({ property });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End PUT
 
 export async function DELETE(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    const userId = searchParams.get('userId');
-
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
     const property = await db.property.findUnique({ where: { id } });
     if (!property) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!canAccessAssigned(user, property.assignedToId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     await db.property.delete({ where: { id } });
-    await logActivity(userId || '', 'Property', id, 'deleted', `Deleted listing: ${property.title}`);
+    await logActivity(user.id, 'Property', id, 'deleted', `Deleted listing: ${property.title}`);
 
     return NextResponse.json({ message: 'Deleted' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End DELETE

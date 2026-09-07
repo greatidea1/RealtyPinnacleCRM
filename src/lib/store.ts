@@ -1,12 +1,18 @@
 import { create } from 'zustand';
-import type { User, PageView, Property, Client, Deal, Task, Notification, Activity, DashboardStats } from './types';
+import type { User, PageView, Property, Client, Deal, Task } from './types';
 
 interface AppState {
   // Auth
   user: User | null;
   isAuthenticated: boolean;
+  authChecked: boolean;
   login: (user: User) => void;
   logout: () => void;
+  setAuthChecked: (checked: boolean) => void;
+
+  // Data sync — bumped after mutations so list pages refetch without a full page reload
+  dataVersion: number;
+  bumpDataVersion: () => void;
 
   // Navigation
   currentPage: PageView;
@@ -58,14 +64,31 @@ interface AppState {
   // Notification panel
   notifPanelOpen: boolean;
   setNotifPanelOpen: (open: boolean) => void;
+
+  // Password reset token from URL
+  resetToken: string | null;
+  setResetToken: (token: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Auth
   user: null,
   isAuthenticated: false,
-  login: (user) => set({ user, isAuthenticated: true }),
-  logout: () => set({ user: null, isAuthenticated: false, currentPage: 'login', selectedId: null }),
+  authChecked: false,
+  login: (user) => set({ user, isAuthenticated: true, currentPage: 'dashboard' }),
+  logout: () =>
+    set({
+      user: null,
+      isAuthenticated: false,
+      currentPage: 'login',
+      selectedId: null,
+      resetToken: null,
+    }),
+  setAuthChecked: (checked) => set({ authChecked: checked }),
+
+  // Data sync
+  dataVersion: 0,
+  bumpDataVersion: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
 
   // Navigation
   currentPage: 'login',
@@ -127,4 +150,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Notification panel
   notifPanelOpen: false,
   setNotifPanelOpen: (open) => set({ notifPanelOpen: open }),
+
+  // Password reset
+  resetToken: null,
+  setResetToken: (token) => set({ resetToken: token }),
 }));

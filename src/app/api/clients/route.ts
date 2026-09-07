@@ -1,10 +1,13 @@
 import { db } from '@/lib/db';
+import { assignedScope, canAccessAssigned, requireAuth } from '@/lib/auth-guard';
 import { resolveClientPreferredLocation } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
+/** Writes an activity log row for the given user/entity. */
 async function logActivity(userId: string, entityType: string, entityId: string, action: string, description: string) {
   await db.activity.create({ data: { userId, entityType, entityId, action, description } });
 }
+// End logActivity
 
 /** Strips non-Prisma client fields and resolves preferred location against Location Master. */
 async function prepareClientData(raw: Record<string, unknown>) {
@@ -30,9 +33,11 @@ async function prepareClientData(raw: Record<string, unknown>) {
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const role = searchParams.get('role');
     const type = searchParams.get('type');
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
@@ -40,10 +45,11 @@ export async function GET(req: NextRequest) {
     const id = searchParams.get('id');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const scope = assignedScope(user);
 
     if (id) {
-      const client = await db.client.findUnique({
-        where: { id },
+      const client = await db.client.findFirst({
+        where: { id, ...scope },
         include: {
           assignedTo: { select: { id: true, name: true, avatar: true } },
           deals: {
@@ -58,8 +64,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ client });
     }
 
-    const where: any = {};
-    if (role !== 'ADMIN' && userId) where.assignedToId = userId;
+    const where: Record<string, unknown> = { ...scope };
     if (type && type !== 'All') where.clientType = type;
     if (status && status !== 'All') where.status = status;
     if (priority) where.priority = priority;
@@ -88,21 +93,32 @@ export async function GET(req: NextRequest) {
     ]);
 
     return NextResponse.json({ clients, total, page, limit });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End GET
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const body = await req.json();
-    const { userId, reminderDate, reminderNote, ...data } = body;
-    const prepared = await prepareClientData(data) as Record<string, unknown>;
+    const { reminderDate, reminderNote, userId: _clientUserId, ...data } = body;
+    const prepared = (await prepareClientData(data)) as Record<string, unknown>;
+
+    let assignedToId = user.id;
+    if (user.role === 'ADMIN' && typeof prepared.assignedToId === 'string' && prepared.assignedToId) {
+      assignedToId = prepared.assignedToId;
+    }
 
     const client = await db.client.create({
       data: {
         ...(prepared as object),
-        assignedToId: (prepared.assignedToId as string) || userId,
+        assignedToId,
         reminderDate: reminderDate ? new Date(reminderDate) : null,
         reminderNote,
       } as Parameters<typeof db.client.create>[0]['data'],
@@ -121,10 +137,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    await logActivity(userId, 'Client', client.id, 'created', `New lead: ${client.name}`);
+    await logActivity(user.id, 'Client', client.id, 'created', `New lead: ${client.name}`);
     await db.notification.create({
       data: {
-        userId,
+        userId: user.id,
         type: 'new_lead',
         title: 'New Lead',
         description: `${client.name} registered as ${client.clientType}`,
@@ -133,20 +149,32 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ client }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End POST
 
 export async function PUT(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const body = await req.json();
-    const { id, userId, _count, assignedTo, deals, reminderDate, reminderNote, ...data } = body;
+    const { id, _count, assignedTo, deals, reminderDate, reminderNote, userId: _clientUserId, ...data } = body;
 
     const existing = await db.client.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!canAccessAssigned(user, existing.assignedToId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const prepared = await prepareClientData(data);
+    if (user.role !== 'ADMIN') {
+      (prepared as Record<string, unknown>).assignedToId = existing.assignedToId;
+    }
 
     const client = await db.client.update({
       where: { id },
@@ -157,27 +185,37 @@ export async function PUT(req: NextRequest) {
       } as Parameters<typeof db.client.update>[0]['data'],
     });
 
-    await logActivity(userId, 'Client', id, 'updated', `Updated client: ${client.name}`);
+    await logActivity(user.id, 'Client', id, 'updated', `Updated client: ${client.name}`);
     return NextResponse.json({ client });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End PUT
 
 export async function DELETE(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if ('error' in auth) return auth.error;
+    const { user } = auth;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    const userId = searchParams.get('userId');
-
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
     const client = await db.client.findUnique({ where: { id } });
     if (!client) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!canAccessAssigned(user, client.assignedToId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     await db.client.delete({ where: { id } });
-    await logActivity(userId || '', 'Client', id, 'deleted', `Deleted client: ${client.name}`);
+    await logActivity(user.id, 'Client', id, 'deleted', `Deleted client: ${client.name}`);
     return NextResponse.json({ message: 'Deleted' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// End DELETE
