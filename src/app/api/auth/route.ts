@@ -211,3 +211,9 @@ export async function POST(req: NextRequest) {
   }
 }
 // End POST
+
+/** Accepts PUT for change-password / update-profile (legacy clients that used PUT). */
+export async function PUT(req: NextRequest) {
+  return POST(req);
+}
+// End PUT

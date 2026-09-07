@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { assignedScope, canAccessAssigned, requireAuth } from '@/lib/auth-guard';
+import { assignedScope, canAccessAssigned, isAdmin, requireAuth } from '@/lib/auth-guard';
 import { resolveClientPreferredLocation } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     const prepared = (await prepareClientData(data)) as Record<string, unknown>;
 
     let assignedToId = user.id;
-    if (user.role === 'ADMIN' && typeof prepared.assignedToId === 'string' && prepared.assignedToId) {
+    if (isAdmin(user) && typeof prepared.assignedToId === 'string' && prepared.assignedToId) {
       assignedToId = prepared.assignedToId;
     }
 
@@ -172,7 +172,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const prepared = await prepareClientData(data);
-    if (user.role !== 'ADMIN') {
+    if (!isAdmin(user)) {
       (prepared as Record<string, unknown>).assignedToId = existing.assignedToId;
     }
 

@@ -57,7 +57,7 @@ export async function requireAdminAuth(
 ): Promise<{ user: SessionUser } | { error: NextResponse }> {
   const auth = await requireAuth(req);
   if ('error' in auth) return auth;
-  if (auth.user.role !== 'ADMIN') {
+  if (!isAdmin(auth.user)) {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
   return auth;
@@ -65,17 +65,24 @@ export async function requireAdminAuth(
 // End requireAdminAuth
 
 /** Prisma where fragment that scopes assigned records to the current user (admins see all). */
-export function assignedScope(user: SessionUser): { assignedToId?: string } {
-  if (user.role === 'ADMIN') return {};
+export function assignedScope(user: SessionUser): { assignedToId: string } | Record<string, never> {
+  // Only exact ADMIN may see all rows; every other role is hard-scoped to self.
+  if (isAdmin(user)) return {};
   return { assignedToId: user.id };
 }
 // End assignedScope
 
 /** Returns true when the session user may access a record owned by assignedToId. */
 export function canAccessAssigned(user: SessionUser, assignedToId: string): boolean {
-  return user.role === 'ADMIN' || user.id === assignedToId;
+  return isAdmin(user) || user.id === assignedToId;
 }
 // End canAccessAssigned
+
+/** True when the session user is an admin (DB role, case-insensitive). */
+export function isAdmin(user: SessionUser): boolean {
+  return String(user.role || '').trim().toUpperCase() === 'ADMIN';
+}
+// End isAdmin
 
 /** Strips password and returns a client-safe user object. */
 export function toSafeUser(user: SessionUser) {

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { assignedScope, canAccessAssigned, requireAuth } from '@/lib/auth-guard';
+import { assignedScope, canAccessAssigned, isAdmin, requireAuth } from '@/lib/auth-guard';
 import { resolveCityAndLocality } from '@/lib/locations';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // Agents can only assign to themselves; admins may reassign.
     let assignedToId = user.id;
-    if (user.role === 'ADMIN' && typeof prepared.assignedToId === 'string' && prepared.assignedToId) {
+    if (isAdmin(user) && typeof prepared.assignedToId === 'string' && prepared.assignedToId) {
       assignedToId = prepared.assignedToId;
     }
 
@@ -185,7 +185,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Non-admins cannot reassign ownership.
-    if (user.role !== 'ADMIN') {
+    if (!isAdmin(user)) {
       prepared.assignedToId = existing.assignedToId;
     }
 

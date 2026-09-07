@@ -1,0 +1,37 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
+
+/** Public API paths that do not require a session cookie. */
+function isPublicApi(req: NextRequest): boolean {
+  const { pathname } = req.nextUrl;
+  if (pathname === '/api/auth') return true;
+  if (pathname === '/api' || pathname === '/api/') return true;
+  return false;
+}
+// End isPublicApi
+
+/**
+ * Blocks unauthenticated access to CRM APIs.
+ * Data routes must also scope by session user; this is a fail-closed gate.
+ */
+export function middleware(req: NextRequest) {
+  if (!req.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  if (isPublicApi(req)) {
+    return NextResponse.next();
+  }
+
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  if (!verifySessionToken(token)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return NextResponse.next();
+}
+// End middleware
+
+export const config = {
+  matcher: ['/api/:path*'],
+};

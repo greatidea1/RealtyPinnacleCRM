@@ -13,8 +13,8 @@
 #   8. In Dokploy app General, set Server = Ampere (pull arch must match that host).
 #
 # Environment tab must include:
-#   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
-# optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME
+#   POSTGRES_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, SESSION_SECRET
+# optional: POSTGRES_USER, POSTGRES_DB, ADMIN_NAME, APP_URL
 services:
   app:
     image: ghcr.io/greatidea1/realtypinnaclecrm:main
@@ -35,6 +35,8 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      SESSION_SECRET: ${SESSION_SECRET}
+      APP_URL: ${APP_URL:-}
     depends_on:
       db:
         condition: service_healthy

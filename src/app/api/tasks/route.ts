@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { assignedScope, canAccessAssigned, requireAuth } from '@/lib/auth-guard';
+import { assignedScope, canAccessAssigned, isAdmin, requireAuth } from '@/lib/auth-guard';
 import { endOfTodayIST, startOfTodayIST } from '@/lib/datetime';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     const { dueDate, userId: _clientUserId, ...data } = body;
 
     let assignedToId = user.id;
-    if (user.role === 'ADMIN' && data.assignedToId) {
+    if (isAdmin(user) && data.assignedToId) {
       assignedToId = data.assignedToId;
     }
 
@@ -116,7 +116,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (user.role !== 'ADMIN') {
+    if (!isAdmin(user)) {
       data.assignedToId = existing.assignedToId;
     }
 

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { requireAuth } from '@/lib/auth-guard';
+import { isAdmin, requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
@@ -7,8 +7,7 @@ export async function GET(req: NextRequest) {
     const auth = await requireAuth(req);
     if ('error' in auth) return auth.error;
 
-    const where =
-      auth.user.role === 'ADMIN' ? {} : { userId: auth.user.id };
+    const where = isAdmin(auth.user) ? {} : { userId: auth.user.id };
 
     const activities = await db.activity.findMany({
       where,
