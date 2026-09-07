@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useAppStore } from '@/lib/store';
+import { useCrmRefresh } from '@/hooks/use-crm-refresh';
 import { getGreeting, formatPrice, timeAgo, getInitials, getAvatarColor, type DashboardStats, type Activity, type Task, DEAL_STAGES, STAGE_BG_COLORS } from '@/lib/types';
 import { formatDate, isOverdueIST } from '@/lib/datetime';
 import { Building2, Users, Handshake, AlertTriangle, Clock, ArrowRight, Plus, Circle } from 'lucide-react';
@@ -20,40 +21,39 @@ const activityIcons: Record<string, string> = {
 };
 
 export function DashboardPage() {
-  const { user, navigate, openPropertyForm, openClientForm, dataVersion } = useAppStore();
+  const { user, navigate, openPropertyForm, openClientForm } = useAppStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [pipelineData, setPipelineData] = useState<Record<string, { count: number; value: number }>>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
-    const fetchData = async () => {
-      try {
-        const [statsRes, actRes, taskRes, dealRes] = await Promise.all([
-          fetch('/api/dashboard'),
-          fetch('/api/activity'),
-          fetch('/api/tasks?filter=all'),
-          fetch('/api/deals'),
-        ]);
-        const [statsData, actData, taskData, dealData] = await Promise.all([
-          statsRes.json(), actRes.json(), taskRes.json(), dealRes.json(),
-        ]);
-        setStats(statsData);
-        setActivities(actData.activities || []);
-        setTasks((taskData.tasks || []).slice(0, 5));
-        const pipeline: Record<string, { count: number; value: number }> = {};
-        DEAL_STAGES.forEach(s => pipeline[s] = { count: 0, value: 0 });
-        (dealData.pipelineStats || []).forEach((s: any) => {
-          pipeline[s.stage] = { count: s._count.stage, value: s._sum.dealValue || 0 };
-        });
-        setPipelineData(pipeline);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    };
-    fetchData();
-  }, [user, dataVersion]);
+    try {
+      const [statsRes, actRes, taskRes, dealRes] = await Promise.all([
+        fetch('/api/dashboard'),
+        fetch('/api/activity'),
+        fetch('/api/tasks?filter=all'),
+        fetch('/api/deals'),
+      ]);
+      const [statsData, actData, taskData, dealData] = await Promise.all([
+        statsRes.json(), actRes.json(), taskRes.json(), dealRes.json(),
+      ]);
+      setStats(statsData);
+      setActivities(actData.activities || []);
+      setTasks((taskData.tasks || []).slice(0, 5));
+      const pipeline: Record<string, { count: number; value: number }> = {};
+      DEAL_STAGES.forEach(s => pipeline[s] = { count: 0, value: 0 });
+      (dealData.pipelineStats || []).forEach((s: any) => {
+        pipeline[s.stage] = { count: s._count.stage, value: s._sum.dealValue || 0 };
+      });
+      setPipelineData(pipeline);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [user]);
+
+  useCrmRefresh(fetchData, [user]);
 
   const toggleTask = async (task: Task) => {
     const updated = { ...task, isCompleted: !task.isCompleted };

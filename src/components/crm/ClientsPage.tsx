@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useAppStore } from '@/lib/store';
+import { useCrmRefresh, useLoadingGate } from '@/hooks/use-crm-refresh';
 import {
   type Client, type ClientType,
   PRIORITY_COLORS, CLIENT_STATUS_COLORS,
@@ -32,10 +33,10 @@ const TYPE_COLORS: Record<ClientType, string> = {
 const PAGE_SIZE = 10;
 
 export function ClientsPage() {
-  const { user, navigate, openClientForm, openDeleteDialog, dataVersion } = useAppStore();
+  const { user, navigate, openClientForm, openDeleteDialog } = useAppStore();
   const [clients, setClients] = useState<Client[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { loading, refreshing, begin, end } = useLoadingGate();
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('All');
@@ -44,7 +45,7 @@ export function ClientsPage() {
 
   const fetchClients = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
+    begin();
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
       if (search) params.set('search', search);
@@ -54,16 +55,16 @@ export function ClientsPage() {
       setClients(data.clients || []);
       setTotal(data.total || 0);
     } catch (err) { console.error('Failed to fetch clients', err); }
-    finally { setLoading(false); }
-  }, [user, search, typeFilter, sort, page, dataVersion]);
+    finally { end(); }
+  }, [user, search, typeFilter, sort, page, begin, end]);
 
-  useEffect(() => { fetchClients(); }, [fetchClients]);
+  useCrmRefresh(fetchClients, [user, search, typeFilter, sort, page]);
 
   const handleSearch = () => { setPage(1); setSearch(searchInput); };
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className={cn('p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto transition-opacity', refreshing && 'opacity-70')}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Clients</h1>

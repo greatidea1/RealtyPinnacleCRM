@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
+import { useCrmRefresh, useLoadingGate } from '@/hooks/use-crm-refresh';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -34,10 +35,10 @@ const STEP_TITLES = ['Basic Info', 'Location', 'Pricing & Details', 'Amenities',
 /* ─── Properties List ───────────────────────────────────────────────────── */
 
 export function PropertiesListPage() {
-  const { user, navigate, openPropertyForm, openDeleteDialog, dataVersion } = useAppStore();
+  const { user, navigate, openPropertyForm, openDeleteDialog } = useAppStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+  const { loading, refreshing, begin, end } = useLoadingGate();
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -48,7 +49,7 @@ export function PropertiesListPage() {
 
   const fetchProps = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
+    begin();
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
       if (statusFilter) params.set('status', statusFilter);
@@ -59,17 +60,17 @@ export function PropertiesListPage() {
       setProperties(data.properties || []);
       setTotal(data.total || 0);
       setStatusCounts(data.counts || data.statusCounts || {});
-    } catch {} finally { setLoading(false); }
-  }, [user, statusFilter, typeFilter, search, page, dataVersion]);
+    } catch {} finally { end(); }
+  }, [user, statusFilter, typeFilter, search, page, begin, end]);
 
-  useEffect(() => { fetchProps(); }, [fetchProps]);
+  useCrmRefresh(fetchProps, [user, statusFilter, typeFilter, search, page]);
   const handleSearch = () => { setPage(1); setSearch(searchInput); };
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (loading) return <div className="p-4 sm:p-6 space-y-4"><div className="h-8 w-48 max-w-full shimmer rounded-lg" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i=><div key={i} className="h-48 shimmer rounded-2xl" />)}</div></div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className={cn('p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto transition-opacity', refreshing && 'opacity-70')}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div><h1 className="text-2xl font-bold text-foreground">Properties</h1><p className="text-sm text-muted-foreground mt-0.5">{total} listing{total !== 1 ? 's' : ''}</p></div>
@@ -477,7 +478,16 @@ export function PropertyForm() {
         amenities: form.amenities,
       };
       if (editingProperty) payload.id = editingProperty.id;
-      await fetch('/api/properties', { method: editingProperty ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/properties', {
+        method: editingProperty ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data as { error?: string }).error || 'Failed to save property');
+        return;
+      }
       bumpDataVersion();
       closePropertyForm();
     } catch { setError('Failed to save property'); }

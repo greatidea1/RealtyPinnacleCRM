@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
+import { useCrmRefresh, useLoadingGate } from '@/hooks/use-crm-refresh';
 import { DEAL_STAGES, STAGE_COLORS, STAGE_BG_COLORS, formatPriceShort, getInitials, getAvatarColor, type Deal } from '@/lib/types';
 import { formatDate } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
@@ -14,15 +15,15 @@ import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 
 export function DealsPage() {
-  const { user, navigate, openDealForm, openDeleteDialog, dataVersion } = useAppStore();
+  const { user, navigate, openDealForm, openDeleteDialog } = useAppStore();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [pipelineStats, setPipelineStats] = useState<Record<string, { count: number; value: number }>>({});
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [stageFilter, setStageFilter] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
+  const { loading, refreshing, begin, end } = useLoadingGate();
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    begin();
     try {
       const res = await fetch('/api/deals');
       const data = await res.json();
@@ -31,10 +32,10 @@ export function DealsPage() {
       DEAL_STAGES.forEach(s => stats[s] = { count: 0, value: 0 });
       (data.pipelineStats || []).forEach((s: any) => { stats[s.stage] = { count: s._count.stage, value: s._sum.dealValue || 0 }; });
       setPipelineStats(stats);
-    } catch {} finally { setLoading(false); }
-  }, [user, dataVersion]);
+    } catch {} finally { end(); }
+  }, [user, begin, end]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useCrmRefresh(fetchData, [user]);
 
   const handleStageChange = async (dealId: string, newStage: string) => {
     setDeals(deals.map(d => d.id === dealId ? { ...d, stage: newStage as any } : d));
@@ -49,7 +50,7 @@ export function DealsPage() {
   if (loading) return <div className="p-4 sm:p-6 space-y-4 overflow-x-auto"><div className="h-10 w-64 max-w-full shimmer rounded-xl" />{DEAL_STAGES.map((_, i) => <div key={i} className="h-40 shimmer rounded-xl inline-block w-64 sm:w-72 mr-4" />)}</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-5 max-w-[1600px] mx-auto h-full">
+    <div className={cn('p-4 sm:p-6 space-y-5 max-w-[1600px] mx-auto h-full transition-opacity', refreshing && 'opacity-70')}>
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <div className="flex items-center gap-3 flex-wrap">
           <Select value={stageFilter} onValueChange={setStageFilter}>
@@ -249,7 +250,8 @@ export function DealForm() {
     try {
       const payload: any = { propertyId: form.propertyId, clientId: form.clientId, stage: form.stage, dealValue: parseFloat(form.dealValue), expectedCloseDate: form.expectedCloseDate || null, notes: form.notes || null };
       if (editingDeal) payload.id = editingDeal.id;
-      await fetch('/api/deals', { method: editingDeal ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/deals', { method: editingDeal ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) return;
       bumpDataVersion();
       closeDealForm();
     } catch {} finally { setLoading(false); }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
+import { useCrmRefresh, useLoadingGate } from '@/hooks/use-crm-refresh';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
@@ -19,23 +20,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 type FilterTab = 'all' | 'today' | 'upcoming' | 'completed';
 
 export function TasksPage() {
-  const { user, openTaskForm, openDeleteDialog, dataVersion } = useAppStore();
+  const { user, openTaskForm, openDeleteDialog } = useAppStore();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loading, refreshing, begin, end } = useLoadingGate();
   const [filter, setFilter] = useState<FilterTab>('all');
 
   const fetchTasks = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
+    begin();
     try {
       const res = await fetch(`/api/tasks?filter=${filter}`);
       const data = await res.json();
       setTasks(data.tasks || []);
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [user, filter, dataVersion]);
+    finally { end(); }
+  }, [user, filter, begin, end]);
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useCrmRefresh(fetchTasks, [user, filter]);
 
   const toggleTask = async (task: Task) => {
     setTasks(tasks.map(t => t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t));
@@ -76,7 +77,7 @@ export function TasksPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className={cn('p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto transition-opacity', refreshing && 'opacity-70')}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -249,11 +250,16 @@ export function TaskForm() {
         clientId: form.clientId || null,
       };
       if (editingTask) payload.id = editingTask.id;
-      await fetch('/api/tasks', {
+      const res = await fetch('/api/tasks', {
         method: editingTask ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error || 'Failed to save task');
+        return;
+      }
       bumpDataVersion();
       closeTaskForm();
     } catch {
