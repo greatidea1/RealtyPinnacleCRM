@@ -11,10 +11,11 @@ function isPublicApi(req: NextRequest): boolean {
 // End isPublicApi
 
 /**
- * Blocks unauthenticated access to CRM APIs.
+ * Blocks unauthenticated access to CRM APIs (Next.js 16 proxy, Node runtime).
  * Data routes must also scope by session user; this is a fail-closed gate.
+ * Must be proxy.ts — middleware.ts runs on Edge and crashes on Node crypto/Buffer.
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   if (!req.nextUrl.pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
@@ -30,7 +31,7 @@ export function middleware(req: NextRequest) {
 
   return NextResponse.next();
 }
-// End middleware
+// End proxy
 
 export const config = {
   matcher: ['/api/:path*'],

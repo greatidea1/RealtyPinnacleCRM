@@ -84,3 +84,10 @@ Task: Fix false GHCR PRIVATE failure in docker-publish
 Work Log:
 - Package was already Public; naive curl to manifests/main always got 401 (GHCR Bearer challenge)
 - Verify step now fetches anonymous pull token then GETs :main — returns 200 when Public
+
+---
+Task: Fix /api/users HTTP 500 when logged in
+
+Work Log:
+- Cause: src/middleware.ts ran on Edge; verifySessionToken used Node crypto/Buffer → crash on any real 3-part rp_session cookie (plain "Internal Server Error")
+- Migrated gate to src/proxy.ts (Next 16 Node runtime) and dropped middleware.ts; session compare uses Uint8Array

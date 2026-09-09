@@ -34,8 +34,9 @@ export function verifySessionToken(token: string | undefined | null): string | n
   const payload = `${userId}.${expStr}`;
   const expected = createHmac('sha256', getSessionSecret()).update(payload).digest('base64url');
   try {
-    const a = Buffer.from(sig);
-    const b = Buffer.from(expected);
+    // Prefer Uint8Array over Buffer so this stays safe if ever called from Edge.
+    const a = new TextEncoder().encode(sig);
+    const b = new TextEncoder().encode(expected);
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   } catch {
     return null;
