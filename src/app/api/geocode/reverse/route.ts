@@ -2,7 +2,7 @@ import { reverseGeocodeToPincode } from '@/lib/reverse-geocode';
 import { requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
-/** Reverse-geocodes coordinates to an Indian pincode (lakhua / Nominatim / BigDataCloud). */
+/** Reverse-geocodes coordinates to an Indian pincode (offline postal dataset + online fallbacks). */
 export async function GET(req: NextRequest) {
   try {
     const auth = await requireAuth(req);

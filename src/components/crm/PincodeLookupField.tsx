@@ -54,7 +54,7 @@ function geolocationErrorMessage(err: unknown): string {
 // End geolocationErrorMessage
 
 /**
- * Pincode input that autofills city, locality/area, and state via India Post API.
+ * Pincode input that autofills city, locality/area, and state (offline dataset + API fallbacks).
  * Includes a Locate button that uses GPS + reverse geocode to fill the pincode.
  * Lookup runs only after the user types or locates (not on edit hydrate).
  */
@@ -103,7 +103,7 @@ export function PincodeLookupField({
   // End handleLocalityPick
 
   /**
-   * Uses device GPS, reverse-geocodes to an Indian pincode, then triggers India Post autofill.
+   * Uses device GPS, reverse-geocodes to an Indian pincode, then triggers pincode autofill.
    */
   const handleLocate = async () => {
     setLocating(true);
@@ -191,7 +191,7 @@ export function PincodeLookupField({
       {showLocalityPicker && (
         <div className="mt-2">
           <Label className="text-[10px] font-medium text-muted-foreground mb-1 block">
-            Area / Locality (from India Post)
+            Area / Locality
           </Label>
           <select
             value={pickedLocality || location.locality}

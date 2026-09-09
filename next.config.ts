@@ -6,7 +6,12 @@ process.env.TZ = "Asia/Kolkata";
 const nextConfig: NextConfig = {
   output: "standalone",
   /* config options here */
-  serverExternalPackages: ["@aialok/lakhua", "h3-js"],
+  serverExternalPackages: [
+    "@aialok/lakhua",
+    "h3-js",
+    "@twin.techies/india-pincode",
+    "postalcodes-india",
+  ],
   typescript: {
     ignoreBuildErrors: true,
   },

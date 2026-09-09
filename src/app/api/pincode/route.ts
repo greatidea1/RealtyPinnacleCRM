@@ -2,7 +2,7 @@ import { lookupPincode, isValidPincode } from '@/lib/pincode';
 import { requireAuth } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
-/** Looks up city, locality/area, and state from India Post for a 6-digit pincode. */
+/** Looks up city, locality/area, and state for a 6-digit Indian pincode (offline-first). */
 export async function GET(req: NextRequest) {
   try {
     const auth = await requireAuth(req);

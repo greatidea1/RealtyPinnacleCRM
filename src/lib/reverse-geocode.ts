@@ -7,7 +7,7 @@ export interface ReverseGeocodeResult {
   city: string | null;
   state: string | null;
   district: string | null;
-  source: 'lakhua' | 'nominatim' | 'bigdatacloud';
+  source: 'postalcodes-india' | 'lakhua' | 'nominatim' | 'bigdatacloud' | 'photon';
 }
 
 /** Extracts a 6-digit Indian pincode from free text (postcode field or display name). */
@@ -19,7 +19,68 @@ function extractIndianPincode(raw: string | undefined | null): string | null {
 }
 // End extractIndianPincode
 
-/** Tries offline India reverse geocode; returns null if the package is missing or has no match. */
+/**
+ * Offline nearest-pincode lookup via postalcodes-india GeoNames dataset.
+ * Works without outbound network (critical on locked-down / SSL-broken hosts).
+ */
+async function reverseViaPostalCodesIndia(
+  lat: number,
+  lon: number
+): Promise<Partial<ReverseGeocodeResult> | null> {
+  try {
+    const mod = await import('postalcodes-india');
+    const api = (mod as { default?: typeof mod }).default || mod;
+    const findByRadius = (api as {
+      findByRadius?: (latitude: number, longitude: number, radiusKm: number) => Array<{
+        postalCode: string;
+        placeName?: string;
+        stateName?: string;
+        districtName?: string;
+        latitude?: number;
+        longitude?: number;
+      }>;
+    }).findByRadius;
+
+    if (typeof findByRadius !== 'function') return null;
+
+    // Expand radius until we get a hit (urban first, then rural).
+    for (const km of [2, 5, 10, 20]) {
+      const hits = findByRadius(lat, lon, km) || [];
+      if (!hits.length) continue;
+
+      // Pick geographically nearest hit when coordinates are present.
+      let best = hits[0];
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (const h of hits) {
+        if (typeof h.latitude !== 'number' || typeof h.longitude !== 'number') continue;
+        const dlat = h.latitude - lat;
+        const dlon = h.longitude - lon;
+        const dist = dlat * dlat + dlon * dlon;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = h;
+        }
+      }
+
+      const pincode = extractIndianPincode(best.postalCode);
+      if (!pincode) continue;
+
+      return {
+        pincode,
+        city: best.districtName || best.placeName || null,
+        state: best.stateName || null,
+        district: best.districtName || null,
+        source: 'postalcodes-india',
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+// End reverseViaPostalCodesIndia
+
+/** Tries offline India reverse geocode (lakhua / H3); returns null if missing. */
 async function reverseViaLakhua(
   lat: number,
   lon: number
@@ -56,6 +117,7 @@ async function reverseViaNominatim(lat: number, lon: number): Promise<Partial<Re
       'User-Agent': 'RealtyPinnacleCRM/1.0 (https://crm.realtypinnacle.com; property-locate)',
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) return null;
 
@@ -103,6 +165,7 @@ async function reverseViaBigDataCloud(lat: number, lon: number): Promise<Partial
   const res = await fetch(url.toString(), {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) return null;
 
@@ -132,6 +195,49 @@ async function reverseViaBigDataCloud(lat: number, lon: number): Promise<Partial
 }
 // End reverseViaBigDataCloud
 
+/** Reverse geocode via Komoot Photon (OSM-based, often returns postcode). */
+async function reverseViaPhoton(lat: number, lon: number): Promise<Partial<ReverseGeocodeResult> | null> {
+  const url = new URL('https://photon.komoot.io/reverse');
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lon', String(lon));
+
+  const res = await fetch(url.toString(), {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    features?: Array<{
+      properties?: {
+        postcode?: string;
+        city?: string;
+        state?: string;
+        district?: string;
+        countrycode?: string;
+        name?: string;
+      };
+    }>;
+  };
+
+  const props = data.features?.[0]?.properties;
+  if (!props) return null;
+
+  const cc = String(props.countrycode || '').toUpperCase();
+  const pincode = extractIndianPincode(props.postcode) || extractIndianPincode(props.name);
+  if (cc && cc !== 'IN' && !pincode) return null;
+
+  return {
+    pincode,
+    city: props.city || props.district || null,
+    state: props.state || null,
+    district: props.district || null,
+    source: 'photon',
+  };
+}
+// End reverseViaPhoton
+
 /** Merges a partial provider result onto the accumulating reverse-geocode result. */
 function applyPartial(
   base: ReverseGeocodeResult,
@@ -151,7 +257,7 @@ function applyPartial(
 
 /**
  * Resolves lat/lng to an Indian pincode.
- * Uses offline lakhua when available, then Nominatim, then BigDataCloud.
+ * Offline postalcodes-india / lakhua first, then Nominatim, Photon, BigDataCloud.
  */
 export async function reverseGeocodeToPincode(lat: number, lon: number): Promise<ReverseGeocodeResult> {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -168,24 +274,22 @@ export async function reverseGeocodeToPincode(lat: number, lon: number): Promise
     city: null,
     state: null,
     district: null,
-    source: 'lakhua',
+    source: 'postalcodes-india',
   };
+
+  result = applyPartial(result, await reverseViaPostalCodesIndia(lat, lon));
+  if (result.pincode) return result;
 
   result = applyPartial(result, await reverseViaLakhua(lat, lon));
   if (result.pincode) return result;
 
-  try {
-    result = applyPartial(result, await reverseViaNominatim(lat, lon));
-    if (result.pincode) return result;
-  } catch {
-    /* continue */
-  }
-
-  try {
-    result = applyPartial(result, await reverseViaBigDataCloud(lat, lon));
-    if (result.pincode) return result;
-  } catch {
-    /* continue */
+  for (const provider of [reverseViaNominatim, reverseViaPhoton, reverseViaBigDataCloud]) {
+    try {
+      result = applyPartial(result, await provider(lat, lon));
+      if (result.pincode) return result;
+    } catch {
+      /* try next */
+    }
   }
 
   if (!result.pincode) {

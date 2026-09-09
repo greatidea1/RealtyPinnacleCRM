@@ -21,7 +21,7 @@ export interface UsePincodeLookupResult {
 }
 
 /**
- * Debounced India Post pincode lookup via /api/pincode.
+ * Debounced pincode lookup via /api/pincode (offline dataset + API fallbacks).
  * Fires automatically when `pincode` becomes a valid 6-digit value.
  */
 export function usePincodeLookup(

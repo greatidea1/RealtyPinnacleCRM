@@ -62,9 +62,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
-# Offline India reverse-geocoder (externalized; must exist at runtime in standalone image)
+# Offline India geocoders / pincode datasets (externalized; required at runtime in standalone)
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@aialok ./node_modules/@aialok
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/h3-js ./node_modules/h3-js
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@twin.techies ./node_modules/@twin.techies
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postalcodes-india ./node_modules/postalcodes-india
 # Complete Prisma CLI install (separate tree so migrate has c12/effect/engines).
 COPY --from=prisma-tools --chown=nextjs:nodejs /prisma-tools /prisma-tools
 COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
