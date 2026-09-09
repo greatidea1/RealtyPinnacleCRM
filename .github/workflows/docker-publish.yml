@@ -156,15 +156,29 @@ jobs:
 
       - name: Verify anonymous GHCR pull (Dokploy check)
         run: |
-          # Unauthenticated manifest fetch — must NOT be 401/403 for public packages.
+          # GHCR always returns 401 without a Bearer token — even for public packages.
+          # Docker/Dokploy get an anonymous pull token first; mimic that flow here.
+          IMAGE="${{ env.IMAGE_NAME }}"
+          ACCEPT="application/vnd.oci.image.index.v1+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.docker.distribution.manifest.v2+json"
+          TOKEN=$(curl -sS "https://ghcr.io/token?service=ghcr.io&scope=repository:${IMAGE}:pull" \
+            | jq -r '.token // empty')
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Could not obtain anonymous GHCR pull token for ${IMAGE}."
+            exit 1
+          fi
           CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -H "Accept: application/vnd.oci.image.manifest.v1+json" \
-            "https://ghcr.io/v2/${{ env.IMAGE_NAME }}/manifests/main")
-          echo "Anonymous HEAD/GET status for :main => ${CODE}"
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: ${ACCEPT}" \
+            "https://ghcr.io/v2/${IMAGE}/manifests/main")
+          echo "Anonymous (token) GET status for :main => ${CODE}"
           if [ "$CODE" = "401" ] || [ "$CODE" = "403" ]; then
             echo "::error::GHCR package is still PRIVATE. Dokploy will fail with 'denied'."
             echo "::error::Fix once: GitHub → Packages → ${{ env.PACKAGE_NAME }} → Package settings → Change visibility → Public"
             echo "::error::Then re-run this workflow (or Redeploy Dokploy after visibility is Public)."
+            exit 1
+          fi
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Unexpected GHCR status ${CODE} for ${IMAGE}:main (expected 200)."
             exit 1
           fi
           echo "OK — anonymous access works (status ${CODE}). Dokploy can pull without a registry login."

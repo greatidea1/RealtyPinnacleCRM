@@ -77,3 +77,10 @@ Work Log:
 - Repo main already had /prisma-tools entrypoint (96a4628) but app logs still showed npx prisma: not found
 - Root cause: compose `up --build` without pull reused cached local :main
 - Added pull_policy: always on app service; user must force-pull / redeploy after push
+
+---
+Task: Fix false GHCR PRIVATE failure in docker-publish
+
+Work Log:
+- Package was already Public; naive curl to manifests/main always got 401 (GHCR Bearer challenge)
+- Verify step now fetches anonymous pull token then GETs :main — returns 200 when Public
