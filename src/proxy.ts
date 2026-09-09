@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
+
+/** Must match SESSION_COOKIE in src/lib/session.ts (do not import session — Node crypto breaks Edge). */
+const SESSION_COOKIE = 'rp_session';
 
 /** Public API paths that do not require a session cookie. */
 function isPublicApi(req: NextRequest): boolean {
@@ -11,9 +13,9 @@ function isPublicApi(req: NextRequest): boolean {
 // End isPublicApi
 
 /**
- * Blocks unauthenticated access to CRM APIs (Next.js 16 proxy, Node runtime).
- * Data routes must also scope by session user; this is a fail-closed gate.
- * Must be proxy.ts — middleware.ts runs on Edge and crashes on Node crypto/Buffer.
+ * Optimistic API gate: require a session-shaped cookie without verifying HMAC here.
+ * Full HMAC + DB checks stay in requireAuth / requireAdminAuth (Node route handlers).
+ * Avoid importing src/lib/session — Edge bundles crash on createHmac/Buffer.
  */
 export function proxy(req: NextRequest) {
   if (!req.nextUrl.pathname.startsWith('/api/')) {
@@ -25,7 +27,8 @@ export function proxy(req: NextRequest) {
   }
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
-  if (!verifySessionToken(token)) {
+  // userId.exp.sig — shape only; invalid/expired tokens fail in route handlers.
+  if (!token || token.split('.').length !== 3) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
