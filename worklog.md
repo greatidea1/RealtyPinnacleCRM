@@ -91,3 +91,10 @@ Task: Fix /api/users HTTP 500 when logged in
 Work Log:
 - Cause: src/middleware.ts ran on Edge; verifySessionToken used Node crypto/Buffer → crash on any real 3-part rp_session cookie (plain "Internal Server Error")
 - Migrated gate to src/proxy.ts (Next 16 Node runtime) and dropped middleware.ts; session compare uses Uint8Array
+---
+Task: Offline pincode + Edge-safe API gate
+
+Work Log:
+- api.postalpincode.in often unreachable from Node/Docker (SSL/DNS); switched lookup to @twin.techies/india-pincode offline-first (+ India Post / Zippopotam fallbacks)
+- Locate reverse-geocode now prefers postalcodes-india findByRadius, then lakhua / Nominatim / Photon / BigDataCloud
+- Dockerfile copies both packages into standalone; proxy gate is shape-only (no Node crypto import)
