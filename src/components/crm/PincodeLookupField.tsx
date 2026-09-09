@@ -40,7 +40,7 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
 }
 // End getCurrentPosition
 
-/** Maps GeolocationPositionError codes to a short user-facing message. */
+/** Maps locate / geolocation failures to a short user-facing message. */
 function geolocationErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'code' in err) {
     const code = (err as GeolocationPositionError).code;
@@ -117,13 +117,18 @@ export function PincodeLookupField({
       const res = await fetch(
         `/api/geocode/reverse?lat=${encodeURIComponent(String(lat))}&lng=${encodeURIComponent(String(lng))}`
       );
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({} as { error?: string; location?: { pincode?: string } }));
       if (!res.ok) {
-        throw new Error((data as { error?: string }).error || 'Could not resolve pincode from location');
+        throw new Error(
+          (data as { error?: string }).error ||
+            `Could not resolve pincode from location (${res.status})`
+        );
       }
 
       const pin = (data as { location?: { pincode?: string } }).location?.pincode || '';
-      if (!pin) throw new Error('No pincode found for your current location');
+      if (!pin) {
+        throw new Error('No pincode found for your current location. Enter it manually.');
+      }
 
       setUserEdited(true);
       onChange(pin);
