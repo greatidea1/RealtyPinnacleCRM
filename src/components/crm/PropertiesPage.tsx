@@ -592,6 +592,10 @@ export function PropertyForm() {
         {/* Step 1: Location with Map */}
         {step === 1 && (
           <div className="space-y-4">
+            <p className="text-xs text-muted-foreground rounded-xl border border-border bg-muted/40 px-3 py-2">
+              Enter a 6-digit pincode or tap <span className="text-cyan-400 font-medium">Locate</span> to use your
+              current GPS location. City, locality/area, and state fill in automatically.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <PincodeLookupField
                 value={form.pincode}

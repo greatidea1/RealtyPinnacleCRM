@@ -9,7 +9,7 @@ import {
   Key, Save, CheckCircle2, AlertCircle, Users, Lock,
 } from 'lucide-react';
 import type { User as UserType, UserRole } from '@/lib/types';
-import { getInitials, getAvatarColor } from '@/lib/types';
+import { getInitials, getAvatarColor, isAdminRole } from '@/lib/types';
 import { formatDate } from '@/lib/datetime';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -20,16 +20,36 @@ export function SettingsPage() {
   const { user } = useAppStore();
   const [users, setUsers] = useState<UserType[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [usersError, setUsersError] = useState('');
+  const isAdmin = isAdminRole(user?.role);
+
+  /** Loads all CRM users for the admin User Management table. */
+  const loadUsers = async () => {
+    if (!isAdmin) return;
+    setLoadingUsers(true);
+    setUsersError('');
+    try {
+      const res = await fetch('/api/users');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setUsers([]);
+        setUsersError((data as { error?: string }).error || `Failed to load users (${res.status})`);
+        return;
+      }
+      setUsers((data as { users?: UserType[] }).users || []);
+    } catch {
+      setUsers([]);
+      setUsersError('Failed to load users');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+  // End loadUsers
 
   useEffect(() => {
-    if (user?.role === 'ADMIN') {
-      setLoadingUsers(true);
-      fetch('/api/users')
-        .then(r => r.json())
-        .then(d => { setUsers(d.users || []); setLoadingUsers(false); })
-        .catch(() => setLoadingUsers(false));
-    }
-  }, [user]);
+    void loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?.role]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
@@ -42,21 +62,22 @@ export function SettingsPage() {
       <ChangePasswordSection user={user} />
 
       {/* Admin: Location Master */}
-      {user?.role === 'ADMIN' && <LocationMasterSection />}
+      {isAdmin && <LocationMasterSection />}
 
       {/* Admin: User Management */}
-      {user?.role === 'ADMIN' && (
+      {isAdmin && (
         <UserManagement
           users={users}
           loading={loadingUsers}
-          onRefresh={() => {
-            setLoadingUsers(true);
-            fetch('/api/users')
-              .then(r => r.json())
-              .then(d => { setUsers(d.users || []); setLoadingUsers(false); })
-              .catch(() => setLoadingUsers(false));
-          }}
+          error={usersError}
+          onRefresh={() => { void loadUsers(); }}
         />
+      )}
+
+      {!isAdmin && (
+        <div className="glass-card rounded-2xl p-6 text-sm text-muted-foreground">
+          User Management is available to admins only. Signed-up agents appear there after an admin refreshes Settings.
+        </div>
       )}
     </div>
   );
@@ -113,7 +134,7 @@ function ProfileSection({ user }: { user: any }) {
           <div className="flex items-center gap-2 mt-1">
             <span className={cn(
               'text-[10px] px-2 py-0.5 rounded-full border font-medium',
-              user?.role === 'ADMIN' ? 'bg-violet-500/15 text-violet-400 border-violet-500/30' : 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
+              user?.role && isAdminRole(user.role) ? 'bg-violet-500/15 text-violet-400 border-violet-500/30' : 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
             )}>
               {user?.role}
             </span>
@@ -269,7 +290,17 @@ function ChangePasswordSection({ user }: { user: any }) {
 }
 
 /* Admin User Management — invite-only account creation */
-function UserManagement({ users, loading, onRefresh }: { users: UserType[]; loading: boolean; onRefresh: () => void }) {
+function UserManagement({
+  users,
+  loading,
+  error,
+  onRefresh,
+}: {
+  users: UserType[];
+  loading: boolean;
+  error?: string;
+  onRefresh: () => void;
+}) {
   const { user } = useAppStore();
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', email: '', role: 'AGENT' as UserRole, phone: '', password: '' });
@@ -360,11 +391,27 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
           <h2 className="text-base font-bold text-foreground">User Management</h2>
           <span className="text-xs text-muted-foreground">{users.length} users</span>
         </div>
-        <button onClick={() => { setShowAdd(true); setAddMsg(''); setCreatedPassword(''); }}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white gradient-primary shadow-lg shadow-cyan-900/30 self-start">
-          <Plus className="w-4 h-4" /> Invite User
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="px-3 py-2 rounded-xl text-xs font-medium text-foreground/80 bg-muted border border-border hover:border-cyan-500/40 disabled:opacity-50"
+          >
+            Refresh
+          </button>
+          <button onClick={() => { setShowAdd(true); setAddMsg(''); setCreatedPassword(''); }}
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white gradient-primary shadow-lg shadow-cyan-900/30">
+            <Plus className="w-4 h-4" /> Invite User
+          </button>
+        </div>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) { setAddMsg(''); setCreatedPassword(''); } }}>
         <DialogContent className="sm:max-w-md w-full overflow-x-hidden bg-popover border-border text-foreground">
@@ -440,6 +487,10 @@ function UserManagement({ users, loading, onRefresh }: { users: UserType[]; load
         <div className="space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-14 shimmer rounded-xl" />)}
         </div>
+      ) : users.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">
+          {error ? 'Could not load users.' : 'No users found.'}
+        </p>
       ) : (
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full">

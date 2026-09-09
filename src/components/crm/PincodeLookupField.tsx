@@ -173,7 +173,7 @@ export function PincodeLookupField({
           ) : (
             <LocateFixed className="w-3.5 h-3.5" />
           )}
-          <span className="hidden sm:inline">Locate</span>
+          <span className="sm:inline">Locate</span>
         </button>
       </div>
       {displayError && <p className="text-[10px] text-rose-400 mt-1">{displayError}</p>}

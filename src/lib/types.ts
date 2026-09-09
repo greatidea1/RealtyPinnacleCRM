@@ -2,6 +2,12 @@ import { getHoursIST } from '@/lib/datetime';
 
 export type UserRole = 'ADMIN' | 'AGENT';
 
+/** True when role is ADMIN (case-insensitive; safe for client + API payloads). */
+export function isAdminRole(role: string | null | undefined): boolean {
+  return String(role || '').trim().toUpperCase() === 'ADMIN';
+}
+// End isAdminRole
+
 export type PageView =
   | 'login' | 'forgot-password' | 'reset-password' | 'verify-email' | 'register'
   | 'dashboard' | 'properties' | 'property-detail' | 'clients' | 'client-detail'
