@@ -87,6 +87,7 @@ model Property {
   cityId          String?
   localityId      String?
   pincode         String?
+  state           String?
   fullAddress     String
   landmark        String?
   latitude        Float?

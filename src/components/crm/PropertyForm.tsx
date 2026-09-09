@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Check, Loader2, Upload, X, Image as ImageIcon, Youtube, Hash, MapPin } from 'lucide-react';
 import type { User } from '@/lib/types';
+import type { PincodeLocation } from '@/lib/pincode';
+import { PincodeLookupField } from '@/components/crm/PincodeLookupField';
 import dynamic from 'next/dynamic';
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
@@ -28,7 +30,7 @@ interface FormData {
   title: string; propertyType: string; bedrooms: string; bathrooms: string; carpetArea: string;
   price: string; priceUnit: string; floorNumber: string; totalFloors: string;
   ageOfProperty: string; facing: string; furnishing: string;
-  locality: string; city: string; pincode: string; fullAddress: string; landmark: string;
+  locality: string; city: string; pincode: string; state: string; fullAddress: string; landmark: string;
   latitude: string; longitude: string;
   reraNumber: string; developerName: string; projectName: string; projectReraNumber: string;
   contactPerson: string; contactPhone: string; contactEmail: string; contactDesignation: string;
@@ -40,7 +42,7 @@ const defaultForm: FormData = {
   propertyId: '', title: '', propertyType: 'Apartment', bedrooms: '', bathrooms: '', carpetArea: '',
   price: '', priceUnit: 'Lakhs', floorNumber: '', totalFloors: '',
   ageOfProperty: '', facing: '', furnishing: '',
-  locality: '', city: '', pincode: '', fullAddress: '', landmark: '',
+  locality: '', city: '', pincode: '', state: '', fullAddress: '', landmark: '',
   latitude: '', longitude: '',
   reraNumber: '', developerName: '', projectName: '', projectReraNumber: '',
   contactPerson: '', contactPhone: '', contactEmail: '', contactDesignation: '',
@@ -74,7 +76,7 @@ export function PropertyForm() {
           ageOfProperty: editingProperty.ageOfProperty || '', facing: editingProperty.facing || '',
           furnishing: editingProperty.furnishing || '',
           locality: editingProperty.locality, city: editingProperty.city,
-          pincode: editingProperty.pincode || '', fullAddress: editingProperty.fullAddress,
+          pincode: editingProperty.pincode || '', state: editingProperty.state || '', fullAddress: editingProperty.fullAddress,
           landmark: editingProperty.landmark || '',
           latitude: editingProperty.latitude ? String(editingProperty.latitude) : '',
           longitude: editingProperty.longitude ? String(editingProperty.longitude) : '',
@@ -152,7 +154,7 @@ export function PropertyForm() {
         totalFloors: form.totalFloors ? parseInt(form.totalFloors) : null,
         ageOfProperty: form.ageOfProperty || null, facing: form.facing || null,
         furnishing: form.furnishing || null,
-        locality: form.locality, city: form.city, pincode: form.pincode || null,
+        locality: form.locality, city: form.city, pincode: form.pincode || null, state: form.state || null,
         fullAddress: form.fullAddress, landmark: form.landmark || null,
         latitude: form.latitude ? parseFloat(form.latitude) : null,
         longitude: form.longitude ? parseFloat(form.longitude) : null,
@@ -268,9 +270,25 @@ export function PropertyForm() {
 
           {step === 2 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Locality *" name="locality" placeholder="Locality" />
+              <PincodeLookupField
+                value={form.pincode}
+                onChange={(pincode) => set('pincode', pincode)}
+                onResolved={(loc: PincodeLocation) => {
+                  setForm((f) => ({
+                    ...f,
+                    city: loc.city || f.city,
+                    locality: loc.locality || f.locality,
+                    state: loc.state || f.state,
+                  }));
+                }}
+                onCoordinates={(lat, lng) => {
+                  setForm((f) => ({ ...f, latitude: String(lat), longitude: String(lng) }));
+                }}
+                inputClassName="bg-muted border-border text-foreground placeholder:text-muted-foreground/70 focus:border-cyan-500/50 w-full px-3 py-2 rounded-md text-sm outline-none"
+              />
+              <Field label="State" name="state" placeholder="Auto-filled from pincode" />
+              <Field label="Locality / Area *" name="locality" placeholder="Locality" />
               <Field label="City *" name="city" placeholder="City" />
-              <Field label="Pincode" name="pincode" placeholder="Pincode" />
               <Field label="Landmark" name="landmark" placeholder="Landmark" />
               <div className="col-span-1 sm:col-span-2">
                 <Label className="text-xs font-medium text-muted-foreground mb-1 block">Full Address *</Label>

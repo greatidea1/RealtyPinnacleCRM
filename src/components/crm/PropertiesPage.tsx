@@ -18,7 +18,9 @@ import {
 } from 'lucide-react';
 import type { Property, PropertyStatus, PropertyType } from '@/lib/types';
 import { STATUS_COLORS, formatPrice, formatPriceShort, ALL_AMENITIES, getInitials, getAvatarColor, timeAgo, PRIORITY_COLORS, STAGE_COLORS } from '@/lib/types';
+import type { PincodeLocation } from '@/lib/pincode';
 import { LocationCombobox } from '@/components/crm/LocationCombobox';
+import { PincodeLookupField } from '@/components/crm/PincodeLookupField';
 import dynamic from 'next/dynamic';
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
@@ -170,7 +172,7 @@ export function PropertiesListPage() {
               <div className="p-4">
                 <p className="text-sm font-semibold text-foreground truncate mb-0.5">{p.title}</p>
                 {p.propertyId && <p className="text-[10px] text-cyan-400 font-mono mb-1">{p.propertyId}</p>}
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mb-3"><MapPin className="w-3 h-3" />{p.locality}, {p.city}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mb-3"><MapPin className="w-3 h-3" />{p.locality}, {p.city}{p.state ? `, ${p.state}` : ''}</p>
                 <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-3">
                   {p.bedrooms && <span className="flex items-center gap-0.5"><BedDouble className="w-3 h-3" />{p.bedrooms} Bed</span>}
                   {p.bathrooms && <span className="flex items-center gap-0.5"><Bath className="w-3 h-3" />{p.bathrooms} Bath</span>}
@@ -259,6 +261,7 @@ export function PropertyDetailPage() {
             <DetailRow label="Address" value={property.fullAddress} />
             <DetailRow label="Locality" value={property.locality} />
             <DetailRow label="City" value={property.city} />
+            {property.state && <DetailRow label="State" value={property.state} />}
             {property.pincode && <DetailRow label="Pincode" value={property.pincode} />}
             {property.landmark && <DetailRow label="Landmark" value={property.landmark} />}
           </div>
@@ -371,7 +374,7 @@ export function PropertyForm() {
     title: '', propertyType: 'Apartment' as PropertyType, bedrooms: '', bathrooms: '',
     carpetArea: '', builtUpArea: '', price: '', priceUnit: 'Lakhs',
     floorNumber: '', totalFloors: '', ageOfProperty: '', facing: '',
-    locality: '', city: '', cityId: '', localityId: '', pincode: '', fullAddress: '', landmark: '',
+    locality: '', city: '', cityId: '', localityId: '', pincode: '', state: '', fullAddress: '', landmark: '',
     latitude: '', longitude: '', reraNumber: '', developerName: '',
     projectName: '', contactPerson: '', contactPhone: '', contactEmail: '',
     contactDesignation: '', description: '', furnishing: '',
@@ -380,6 +383,55 @@ export function PropertyForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mapCenter, setMapCenter] = useState<[number, number]>([18.5204, 73.8567]);
+  const [pincodeLookupBusy, setPincodeLookupBusy] = useState(false);
+
+  /**
+   * Applies India Post city/locality/state to the form and syncs Location Master IDs.
+   */
+  const applyPincodeLocation = async (loc: PincodeLocation) => {
+    setPincodeLookupBusy(true);
+    try {
+      let cityId = '';
+      let localityId = '';
+      if (loc.city) {
+        const cityRes = await fetch('/api/locations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create-city', name: loc.city }),
+        });
+        const cityData = await cityRes.json();
+        if (cityData.city) cityId = cityData.city.id;
+      }
+      if (loc.locality && cityId) {
+        const locRes = await fetch('/api/locations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create-locality', name: loc.locality, cityId }),
+        });
+        const locData = await locRes.json();
+        if (locData.locality) localityId = locData.locality.id;
+      }
+      setForm((f) => ({
+        ...f,
+        city: loc.city || f.city,
+        cityId: cityId || f.cityId,
+        locality: loc.locality || f.locality,
+        localityId: localityId || '',
+        state: loc.state || f.state,
+      }));
+    } catch {
+      setForm((f) => ({
+        ...f,
+        city: loc.city || f.city,
+        locality: loc.locality || f.locality,
+        localityId: '',
+        state: loc.state || f.state,
+      }));
+    } finally {
+      setPincodeLookupBusy(false);
+    }
+  };
+  // End applyPincodeLocation
 
   useEffect(() => {
     if (!showPropertyForm) return;
@@ -423,7 +475,7 @@ export function PropertyForm() {
           priceUnit: p.priceUnit, floorNumber: String(p.floorNumber || ''),
           totalFloors: String(p.totalFloors || ''), ageOfProperty: p.ageOfProperty || '',
           facing: p.facing || '', locality: p.locality, city: p.city, cityId, localityId,
-          pincode: p.pincode || '', fullAddress: p.fullAddress, landmark: p.landmark || '',
+          pincode: p.pincode || '', state: p.state || '', fullAddress: p.fullAddress, landmark: p.landmark || '',
           latitude: String(p.latitude || ''), longitude: String(p.longitude || ''),
           reraNumber: p.reraNumber || '', developerName: p.developerName || '',
           projectName: p.projectName || '', contactPerson: p.contactPerson || '',
@@ -434,7 +486,7 @@ export function PropertyForm() {
         });
         if (p.latitude && p.longitude) setMapCenter([p.latitude, p.longitude]);
       } else {
-        setForm({ title: '', propertyType: 'Apartment', bedrooms: '', bathrooms: '', carpetArea: '', builtUpArea: '', price: '', priceUnit: 'Lakhs', floorNumber: '', totalFloors: '', ageOfProperty: '', facing: '', locality: '', city: '', cityId: '', localityId: '', pincode: '', fullAddress: '', landmark: '', latitude: '', longitude: '', reraNumber: '', developerName: '', projectName: '', contactPerson: '', contactPhone: '', contactEmail: '', contactDesignation: '', description: '', furnishing: '', status: 'Active', amenities: [] });
+        setForm({ title: '', propertyType: 'Apartment', bedrooms: '', bathrooms: '', carpetArea: '', builtUpArea: '', price: '', priceUnit: 'Lakhs', floorNumber: '', totalFloors: '', ageOfProperty: '', facing: '', locality: '', city: '', cityId: '', localityId: '', pincode: '', state: '', fullAddress: '', landmark: '', latitude: '', longitude: '', reraNumber: '', developerName: '', projectName: '', contactPerson: '', contactPhone: '', contactEmail: '', contactDesignation: '', description: '', furnishing: '', status: 'Active', amenities: [] });
         setMapCenter([18.5204, 73.8567]);
       }
     };
@@ -467,6 +519,7 @@ export function PropertyForm() {
         locality: form.locality, city: form.city,
         cityId: form.cityId || null, localityId: form.localityId || null,
         pincode: form.pincode || null,
+        state: form.state || null,
         fullAddress: form.fullAddress || form.locality, landmark: form.landmark || null,
         latitude: form.latitude ? parseFloat(form.latitude) : null,
         longitude: form.longitude ? parseFloat(form.longitude) : null,
@@ -540,8 +593,31 @@ export function PropertyForm() {
         {step === 1 && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <PincodeLookupField
+                value={form.pincode}
+                onChange={(pincode) => setForm((f) => ({ ...f, pincode }))}
+                onResolved={(loc) => { void applyPincodeLocation(loc); }}
+                onCoordinates={(lat, lng) => {
+                  setForm((f) => ({ ...f, latitude: String(lat), longitude: String(lng) }));
+                  setMapCenter([lat, lng]);
+                }}
+                inputClassName={inputCls}
+              />
               <div>
-                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">City *</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">State</Label>
+                <input
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  className={inputCls}
+                  placeholder="Auto-filled from pincode"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  City *{pincodeLookupBusy ? ' (updating…)' : ''}
+                </Label>
                 <LocationCombobox
                   mode="city"
                   valueId={form.cityId}
@@ -560,7 +636,7 @@ export function PropertyForm() {
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Locality *</Label>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Locality / Area *</Label>
                 <LocationCombobox
                   mode="locality"
                   valueId={form.localityId}
@@ -580,9 +656,9 @@ export function PropertyForm() {
               </div>
             </div>
             <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Full Address</Label><input value={form.fullAddress} onChange={e => setForm({ ...form, fullAddress: e.target.value })} className={inputCls} placeholder="Full address" /></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Pincode</Label><input value={form.pincode} onChange={e => setForm({ ...form, pincode: e.target.value })} className={inputCls} placeholder="411045" /></div>
-              <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Landmark</Label><input value={form.landmark} onChange={e => setForm({ ...form, landmark: e.target.value })} className={inputCls} placeholder="Landmark" /></div>
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Landmark</Label>
+              <input value={form.landmark} onChange={e => setForm({ ...form, landmark: e.target.value })} className={inputCls} placeholder="Landmark" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Latitude</Label><input type="number" step="any" value={form.latitude} onChange={e => setForm({ ...form, latitude: e.target.value })} className={inputCls} placeholder="18.5204" /></div>

@@ -79,6 +79,7 @@ export interface Property {
   cityId?: string;
   localityId?: string;
   pincode?: string;
+  state?: string;
   fullAddress: string;
   landmark?: string;
   latitude?: number;
